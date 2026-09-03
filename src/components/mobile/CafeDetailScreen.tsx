@@ -11,7 +11,10 @@ import {
   QrCode, 
   Lock, 
   AlertCircle,
-  Coffee
+  Coffee,
+  CheckCircle2,
+  Tag,
+  Share2
 } from 'lucide-react';
 
 interface CafeDetailScreenProps {
@@ -30,8 +33,16 @@ export const CafeDetailScreen: React.FC<CafeDetailScreenProps> = ({
   onOpenCheckout,
 }) => {
   const member = store.getMember();
-  const drinks = store.getDrinks().filter((d) => d.cafeId === cafe.id && d.isActive);
+  const allDrinks = store.getDrinks().filter((d) => d.cafeId === cafe.id && d.isActive);
+  
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  const categories = ['All', 'espresso', 'cold_brew', 'matcha', 'latte', 'specialty'];
+
+  const drinks = selectedCategory === 'All'
+    ? allDrinks
+    : allDrinks.filter((d) => d.category === selectedCategory);
 
   const handleDirections = () => {
     const query = encodeURIComponent(`${cafe.name}, ${cafe.address}`);
@@ -46,39 +57,41 @@ export const CafeDetailScreen: React.FC<CafeDetailScreenProps> = ({
     } else if (member.credits === 0) {
       alert(`No credits remaining. Next credit reset on ${member.renewalDate}.`);
     } else {
-      onRedeemDrink(drinks[0]);
+      onRedeemDrink(allDrinks[0]);
     }
   };
 
   return (
-    <div className="space-y-4 pb-24 text-slate-100 animate-in fade-in duration-200">
-      {/* Top Navigation & Image Gallery Header */}
-      <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+    <div className="space-y-6 pb-28 text-slate-100 animate-fade-in">
+      {/* GALLERY & CAFE HERO BANNER */}
+      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10 relative">
         <button
           onClick={onBack}
-          className="absolute top-4 left-4 z-10 bg-slate-950/80 hover:bg-slate-950 text-slate-100 p-2.5 rounded-full backdrop-blur-md transition-colors border border-slate-800"
+          className="absolute top-4 left-4 z-20 bg-slate-950/80 hover:bg-slate-950 text-white p-2.5 rounded-2xl backdrop-blur-md transition-all border border-white/10 shadow-lg"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
 
         {/* Gallery Image Display */}
-        <div className="h-56 w-full relative">
+        <div className="h-64 sm:h-80 w-full relative overflow-hidden">
           <img
             src={cafe.photos[activePhotoIndex] || cafe.photos[0]}
             alt={cafe.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-all duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F17] via-slate-950/30 to-transparent"></div>
 
-          {/* Photo Dots */}
+          {/* Photo Navigation Thumbnails */}
           {cafe.photos.length > 1 && (
-            <div className="absolute bottom-3 left-0 right-0 flex justify-center space-x-1.5 z-10">
-              {cafe.photos.map((_, idx) => (
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-10">
+              {cafe.photos.map((photo, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActivePhotoIndex(idx)}
-                  className={`h-1.5 rounded-full transition-all ${
-                    activePhotoIndex === idx ? 'w-5 bg-amber-400' : 'w-1.5 bg-slate-400/50'
+                  className={`w-3 h-3 rounded-full transition-all border ${
+                    activePhotoIndex === idx
+                      ? 'w-8 bg-amber-400 border-amber-400'
+                      : 'bg-slate-950/60 border-white/30 hover:border-white'
                   }`}
                 />
               ))}
@@ -86,141 +99,176 @@ export const CafeDetailScreen: React.FC<CafeDetailScreenProps> = ({
           )}
         </div>
 
-        {/* Cafe Title Banner */}
-        <div className="p-5 bg-slate-900 space-y-2">
-          <div className="flex items-start justify-between">
+        {/* Cafe Information Banner */}
+        <div className="p-6 space-y-4 relative bg-gradient-to-b from-[#0B0F17] to-slate-900/90">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                📍 {cafe.neighborhood} • {cafe.distanceMiles} miles away
-              </span>
-              <h1 className="text-xl font-black text-slate-100">{cafe.name}</h1>
+              <div className="flex items-center space-x-2 mb-1">
+                <span className="text-xs font-bold uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                  📍 {cafe.neighborhood} • {cafe.distanceMiles} miles
+                </span>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                  🟢 Open Today
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-white">{cafe.name}</h1>
             </div>
 
             {/* Rating Badge */}
-            <div className="flex items-center space-x-1 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-xl">
+            <div className="flex items-center space-x-1.5 bg-amber-500/10 border border-amber-500/30 px-3.5 py-1.5 rounded-2xl shadow-lg">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span className="text-xs font-black text-amber-400">
-                {cafe.ratingCount > 0 ? `${cafe.rating.toFixed(1)} (${cafe.ratingCount})` : 'New'}
+              <span className="text-sm font-black text-amber-400">
+                {cafe.ratingCount > 0 ? `${cafe.rating.toFixed(1)} (${cafe.ratingCount} reviews)` : 'New Cafe'}
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 flex items-center space-x-1">
-            <MapPin className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-            <span className="truncate">{cafe.address}</span>
+          <p className="text-xs text-slate-300 flex items-center space-x-1.5">
+            <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+            <span>{cafe.address}</span>
           </p>
 
-          {/* Perk Line */}
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-xs text-amber-300 font-medium flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          {/* Member Perk Banner */}
+          <div className="glass-panel-amber rounded-2xl p-3.5 text-xs text-amber-300 font-semibold flex items-center space-x-2.5">
+            <Sparkles className="w-5 h-5 text-amber-400 flex-shrink-0" />
             <span>{cafe.perkLine}</span>
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-2 flex items-center space-x-2">
+          {/* Actions */}
+          <div className="flex items-center space-x-3 pt-1">
             <button
               onClick={handleDirections}
-              className="flex-1 py-2.5 px-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-xs font-bold text-slate-200 flex items-center justify-center space-x-1.5 transition-colors"
+              className="flex-1 py-3 px-4 bg-slate-900 hover:bg-slate-800 border border-white/10 rounded-2xl text-xs font-bold text-slate-100 flex items-center justify-center space-x-2 transition-all shadow-md"
             >
-              <Navigation className="w-3.5 h-3.5 text-amber-400" />
-              <span>Get Directions</span>
+              <Navigation className="w-4 h-4 text-amber-400" />
+              <span>Get Directions (Google Maps)</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Opening Hours Collapse/Info */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-2">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
-          <Clock className="w-3.5 h-3.5 text-slate-500" />
-          <span>Opening Hours</span>
+      {/* OPENING HOURS SCHEDULE */}
+      <div className="glass-panel rounded-3xl p-5 space-y-3 border border-white/10">
+        <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center space-x-2">
+          <Clock className="w-4 h-4 text-amber-400" />
+          <span>Opening Hours & Schedule</span>
         </h3>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-300">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           {Object.entries(cafe.openingHours).map(([day, hours]) => (
-            <div key={day} className="flex justify-between py-0.5 border-b border-slate-800/50">
-              <span className="text-slate-400 font-medium">{day}:</span>
-              <span className="font-semibold text-slate-200">{hours}</span>
+            <div key={day} className="bg-slate-950/70 p-2.5 rounded-xl border border-white/5 flex justify-between items-center">
+              <span className="text-slate-400 font-bold">{day}:</span>
+              <span className="font-mono text-slate-200 text-[11px]">{hours}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Full Drink Menu */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
-            <Coffee className="w-3.5 h-3.5 text-amber-400" />
-            <span>Drink Menu & Credit Pricing</span>
+      {/* DRINK MENU & CATEGORY FILTERS */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center space-x-2">
+            <Coffee className="w-4 h-4 text-amber-400" />
+            <span>Craft Drink Menu & Credit Pricing</span>
           </h3>
-          <span className="text-[10px] text-slate-500 font-mono">
-            {drinks.length} Available Drinks
+          <span className="text-xs text-slate-500 font-mono">
+            {drinks.length} Menu Items
           </span>
         </div>
 
-        <div className="space-y-2.5">
-          {drinks.map((drink) => (
-            <div
-              key={drink.id}
-              className="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between space-x-3 hover:border-slate-700 transition-colors"
+        {/* Category Pills */}
+        <div className="flex space-x-2 overflow-x-auto pb-1 scrollbar-none">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-extrabold capitalize whitespace-nowrap transition-all ${
+                selectedCategory === cat
+                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                  : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-white/10'
+              }`}
             >
-              <img
-                src={drink.imageUrl}
-                alt={drink.name}
-                className="w-14 h-14 rounded-xl object-cover border border-slate-800"
-              />
+              {cat.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-1.5">
-                  <h4 className="text-xs font-bold text-slate-100 truncate">{drink.name}</h4>
-                  {drink.isSignature && (
-                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                      Signature
-                    </span>
-                  )}
+        {/* Drinks Grid */}
+        <div className="space-y-3">
+          {drinks.map((drink) => {
+            const savingsUsd = drink.retailPrice - drink.creditPrice;
+            return (
+              <div
+                key={drink.id}
+                className="glass-panel glass-panel-hover rounded-3xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-white/10 transition-all"
+              >
+                <div className="flex items-start space-x-3.5 flex-1 min-w-0">
+                  <img
+                    src={drink.imageUrl}
+                    alt={drink.name}
+                    className="w-16 h-16 rounded-2xl object-cover border border-white/10 flex-shrink-0"
+                  />
+
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="text-sm font-bold text-white truncate">{drink.name}</h4>
+                      {drink.isSignature && (
+                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          Signature
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                      {drink.description}
+                    </p>
+
+                    <div className="flex items-center space-x-3 text-[11px] pt-0.5">
+                      <span className="text-slate-400">Retail Value: <strong className="text-slate-200">${drink.retailPrice.toFixed(2)}</strong></span>
+                      <button
+                        onClick={() => onRateDrink(drink)}
+                        className="text-amber-400 hover:underline flex items-center space-x-1 font-bold"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                        <span>Rate Drink</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">
-                  {drink.description}
-                </p>
 
-                <div className="mt-1.5 flex items-center space-x-2 text-[10px]">
-                  <span className="text-slate-400">Retail: ${drink.retailPrice.toFixed(2)}</span>
-                  <span className="text-slate-600">•</span>
+                {/* Price & Redeem Button */}
+                <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5 gap-2">
+                  <div className="text-right">
+                    <div className="text-base font-black text-amber-400">
+                      {drink.creditPrice} Credits
+                    </div>
+                    {savingsUsd > 0 && (
+                      <span className="text-[10px] text-emerald-400 font-bold">
+                        Saves ${savingsUsd.toFixed(2)} with pass
+                      </span>
+                    )}
+                  </div>
+
                   <button
-                    onClick={() => onRateDrink(drink)}
-                    className="text-amber-400 hover:underline flex items-center space-x-0.5"
+                    onClick={() => {
+                      if (member.accountState === 'visitor') onOpenCheckout();
+                      else onRedeemDrink(drink);
+                    }}
+                    className="py-2 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black rounded-xl shadow-lg shadow-amber-500/20 transition-all"
                   >
-                    <Star className="w-3 h-3 fill-amber-400" />
-                    <span>Rate Drink</span>
+                    {member.accountState === 'visitor' ? 'Subscribe' : 'Redeem Drink'}
                   </button>
                 </div>
               </div>
-
-              {/* Price & Individual Redeem CTA */}
-              <div className="text-right flex flex-col items-end space-y-1.5">
-                <span className="text-sm font-black text-amber-400">
-                  {drink.creditPrice} Credits
-                </span>
-                <button
-                  onClick={() => {
-                    if (member.accountState === 'visitor') onOpenCheckout();
-                    else onRedeemDrink(drink);
-                  }}
-                  className="py-1.5 px-3 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-[11px] font-extrabold transition-all"
-                >
-                  {member.accountState === 'visitor' ? 'Subscribe' : 'Redeem'}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* Fixed Sticky Counter CTA Bar (PRD 4.4) */}
-      <div className="fixed bottom-14 left-0 right-0 max-w-sm mx-auto p-4 z-40">
+      {/* STICKY BOTTOM COUNTER CTA BAR */}
+      <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40">
         <button
           onClick={handlePrimaryRedeemClick}
           disabled={member.accountState === 'member' && (member.credits === 0 || member.status === 'payment_failed')}
-          className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-2xl text-sm shadow-2xl shadow-amber-500/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
+          className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-2xl text-sm shadow-2xl amber-glow flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
         >
           {member.accountState === 'visitor' ? (
             <>
@@ -230,17 +278,17 @@ export const CafeDetailScreen: React.FC<CafeDetailScreenProps> = ({
           ) : member.credits === 0 ? (
             <>
               <Lock className="w-5 h-5" />
-              <span>0 Credits Left • Resets {member.renewalDate}</span>
+              <span>0 Credits Remaining • Resets {member.renewalDate}</span>
             </>
           ) : member.status === 'payment_failed' ? (
             <>
               <AlertCircle className="w-5 h-5" />
-              <span>Payment Failed • Update Card</span>
+              <span>Payment Failed • Update Billing Card</span>
             </>
           ) : (
             <>
               <QrCode className="w-5 h-5" />
-              <span>Redeem Here at Counter ({member.credits} Cr Left)</span>
+              <span>Redeem Here at Counter ({member.credits} Credits Available)</span>
             </>
           )}
         </button>
