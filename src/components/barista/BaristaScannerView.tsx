@@ -9,9 +9,7 @@ import {
   History, 
   Camera, 
   LogOut,
-  Zap,
-  ShieldCheck,
-  Smartphone
+  Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -69,7 +67,7 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
         particleCount: 80,
         spread: 70,
         origin: { y: 0.5 },
-        colors: ['#10b981', '#34d399', '#f59e0b'],
+        colors: ['#C08552', '#8C5A3C', '#FFF8F0', '#4B2E2B'],
       });
     }
   };
@@ -89,19 +87,19 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
   };
 
   return (
-    <div className="min-h-[calc(100vh-60px)] bg-[#0B0F17] flex flex-col items-center justify-center p-4 text-slate-100 animate-fade-in">
-      <div className="w-full max-w-md glass-panel rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+    <div className="min-h-[calc(100vh-60px)] bg-[#FFF8F0] flex flex-col items-center justify-center p-4 text-[#4B2E2B] animate-fade-in">
+      <div className="w-full max-w-md bg-white border border-[#8C5A3C]/20 rounded-3xl overflow-hidden shadow-xl">
         {/* Header Bar */}
-        <div className="bg-slate-950/90 p-4 border-b border-white/10 flex items-center justify-between">
+        <div className="bg-[#FFF8F0] p-4 border-b border-[#8C5A3C]/20 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+            <div className="w-9 h-9 rounded-2xl bg-[#C08552] text-[#FFF8F0] flex items-center justify-center shadow-md">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+              <span className="text-[10px] font-black text-[#C08552] uppercase tracking-widest">
                 Barista Scan Terminal
               </span>
-              <h2 className="text-sm font-extrabold text-white">{cafe.name}</h2>
+              <h2 className="text-sm font-extrabold text-[#4B2E2B]">{cafe.name}</h2>
             </div>
           </div>
 
@@ -109,7 +107,7 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
             <button
               onClick={handleUntrustDevice}
               title="Untrust Device / Log Out PIN"
-              className="text-slate-400 hover:text-red-400 p-2 rounded-xl hover:bg-slate-800 transition-colors"
+              className="text-[#6B4E4B] hover:text-red-700 p-2 rounded-xl hover:bg-[#F4EFE6] transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -119,14 +117,14 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
         {!isPinAuthenticated ? (
           /* PIN AUTHENTICATION SCREEN */
           <div className="p-6 sm:p-8 space-y-6 text-center">
-            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-3xl flex items-center justify-center mx-auto shadow-inner amber-glow">
+            <div className="w-16 h-16 bg-[#FFF8F0] border border-[#8C5A3C]/20 text-[#C08552] rounded-3xl flex items-center justify-center mx-auto shadow-sm">
               <Lock className="w-8 h-8" />
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-white">Enter Counter PIN</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Authenticate {cafe.name} counter device. Default PIN: <code className="text-amber-400 font-mono font-bold">1234</code>
+              <h3 className="text-lg font-black text-[#4B2E2B]">Enter Counter PIN</h3>
+              <p className="text-xs text-[#6B4E4B] mt-1">
+                Authenticate {cafe.name} counter device. Default PIN: <code className="text-[#C08552] font-mono font-bold">1234</code>
               </p>
             </div>
 
@@ -137,16 +135,16 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
                 placeholder="1234"
-                className="w-full bg-slate-950 border border-white/10 rounded-2xl py-3.5 text-center font-mono text-3xl tracking-widest text-amber-400 focus:outline-none focus:border-amber-500"
+                className="w-full bg-[#FFF8F0] border border-[#8C5A3C]/30 rounded-2xl py-3.5 text-center font-mono text-3xl tracking-widest text-[#C08552] focus:outline-none focus:border-[#C08552]"
               />
 
               {pinError && (
-                <p className="text-xs text-red-400 font-bold">{pinError}</p>
+                <p className="text-xs text-red-700 font-bold">{pinError}</p>
               )}
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-emerald-600 text-slate-950 font-black rounded-2xl text-xs shadow-lg shadow-emerald-500/20"
+                className="w-full py-3.5 bg-[#C08552] hover:bg-[#8C5A3C] text-[#FFF8F0] font-black rounded-2xl text-xs shadow-md transition-all"
               >
                 Authenticate Terminal Device
               </button>
@@ -156,32 +154,32 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
           /* SCAN RESULT SCREEN */
           <div className="p-6">
             {scanResult.success ? (
-              /* GREEN SCREEN */
-              <div className="bg-emerald-950/90 border-2 border-emerald-400 rounded-3xl p-6 text-center space-y-5 shadow-2xl emerald-glow animate-fade-in">
-                <div className="w-20 h-20 bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/50">
+              /* GREEN SUCCESS SCREEN */
+              <div className="bg-emerald-50 border-2 border-emerald-500 rounded-3xl p-6 text-center space-y-5 shadow-lg animate-fade-in">
+                <div className="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto shadow-md">
                   <CheckCircle2 className="w-12 h-12" />
                 </div>
 
                 <div>
-                  <span className="text-xs font-black uppercase tracking-widest text-emerald-300">
+                  <span className="text-xs font-black uppercase tracking-widest text-emerald-800">
                     VALID REDEMPTION ✓
                   </span>
-                  <h2 className="text-2xl font-black text-white mt-1">
+                  <h2 className="text-2xl font-black text-[#4B2E2B] mt-1">
                     {scanResult.memberInfo?.drinkName}
                   </h2>
                 </div>
 
-                <div className="bg-slate-950/90 p-4 rounded-2xl border border-emerald-500/30 flex items-center space-x-3 text-left">
+                <div className="bg-white p-4 rounded-2xl border border-emerald-200 flex items-center space-x-3 text-left shadow-sm">
                   <img
                     src={scanResult.memberInfo?.photo}
                     alt={scanResult.memberInfo?.name}
-                    className="w-14 h-14 rounded-2xl object-cover border border-emerald-500/40"
+                    className="w-14 h-14 rounded-2xl object-cover border border-emerald-300"
                   />
                   <div>
-                    <h4 className="text-sm font-bold text-white">
+                    <h4 className="text-sm font-bold text-[#4B2E2B]">
                       {scanResult.memberInfo?.name}
                     </h4>
-                    <span className="text-xs font-extrabold text-amber-400">
+                    <span className="text-xs font-extrabold text-[#C08552]">
                       -{scanResult.memberInfo?.creditsDeducted} Credits Deducted
                     </span>
                   </div>
@@ -189,28 +187,28 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
 
                 <button
                   onClick={() => setScanResult(null)}
-                  className="w-full py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black rounded-2xl text-xs shadow-lg"
+                  className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl text-xs shadow-md transition-all"
                 >
                   Scan Next Member Code
                 </button>
               </div>
             ) : (
-              /* RED SCREEN */
-              <div className="bg-red-950/90 border-2 border-red-500 rounded-3xl p-6 text-center space-y-5 shadow-2xl animate-fade-in">
-                <div className="w-20 h-20 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto shadow-lg shadow-red-500/50">
+              /* RED REJECTION SCREEN */
+              <div className="bg-red-50 border-2 border-red-500 rounded-3xl p-6 text-center space-y-5 shadow-lg animate-fade-in">
+                <div className="w-20 h-20 bg-red-600 text-white rounded-full flex items-center justify-center mx-auto shadow-md">
                   <XCircle className="w-12 h-12" />
                 </div>
 
                 <div>
-                  <span className="text-xs font-black uppercase tracking-widest text-red-300">
+                  <span className="text-xs font-black uppercase tracking-widest text-red-800">
                     REDEMPTION REJECTED ✗
                   </span>
-                  <h2 className="text-xl font-black text-white mt-1">
+                  <h2 className="text-xl font-black text-red-950 mt-1">
                     {scanResult.reason?.replace('_', ' ')}
                   </h2>
                 </div>
 
-                <div className="bg-slate-950/90 p-3.5 rounded-2xl border border-red-500/30 text-xs text-red-300">
+                <div className="bg-white p-3.5 rounded-2xl border border-red-200 text-xs text-red-800">
                   {scanResult.reason === 'EXPIRED_CODE' && 'Code exceeded 5-minute counter window.'}
                   {scanResult.reason === 'ALREADY_REDEEMED' && 'This single-use code has already been scanned.'}
                   {scanResult.reason === 'WRONG_CAFE' && 'Code belongs to a different partner cafe.'}
@@ -221,7 +219,7 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
 
                 <button
                   onClick={() => setScanResult(null)}
-                  className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-black rounded-2xl text-xs"
+                  className="w-full py-3.5 bg-[#4B2E2B] hover:bg-[#3D2523] text-[#FFF8F0] font-black rounded-2xl text-xs"
                 >
                   Try Again
                 </button>
@@ -231,13 +229,13 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
         ) : (
           /* SCANNER MAIN INTERFACE */
           <div className="p-5 space-y-5">
-            <div className="flex bg-slate-950/90 p-1 rounded-2xl border border-white/10 text-xs font-bold">
+            <div className="flex bg-[#FFF8F0] p-1 rounded-2xl border border-[#8C5A3C]/20 text-xs font-bold">
               <button
                 onClick={() => setActiveTab('scanner')}
                 className={`flex-1 py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
                   activeTab === 'scanner'
-                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#C08552] text-[#FFF8F0] shadow-md font-black'
+                    : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
                 }`}
               >
                 <Camera className="w-4 h-4" />
@@ -247,8 +245,8 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
                 onClick={() => setActiveTab('today')}
                 className={`flex-1 py-2.5 rounded-xl flex items-center justify-center space-x-1.5 transition-all ${
                   activeTab === 'today'
-                    ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 text-slate-950 shadow-md font-black'
-                    : 'text-slate-400 hover:text-slate-200'
+                    ? 'bg-[#C08552] text-[#FFF8F0] shadow-md font-black'
+                    : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
                 }`}
               >
                 <History className="w-4 h-4" />
@@ -258,32 +256,31 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
 
             {activeTab === 'scanner' ? (
               <div className="space-y-4">
-                {/* Camera Viewport with Laser Beam */}
-                <div className="bg-slate-950 border-2 border-dashed border-emerald-500/40 rounded-3xl p-8 text-center space-y-4 relative overflow-hidden">
-                  <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-scan-laser"></div>
+                <div className="bg-[#FFF8F0] border-2 border-dashed border-[#C08552]/40 rounded-3xl p-8 text-center space-y-4 relative overflow-hidden">
+                  <div className="absolute inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-[#C08552] to-transparent animate-scan-laser"></div>
 
-                  <div className="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/30">
+                  <div className="w-16 h-16 bg-[#C08552]/10 text-[#C08552] rounded-full flex items-center justify-center mx-auto border border-[#C08552]/30">
                     <Camera className="w-8 h-8 animate-pulse" />
                   </div>
-                  <p className="text-xs text-slate-400 font-medium">
+                  <p className="text-xs text-[#6B4E4B] font-medium">
                     Point camera at member's phone QR code...
                   </p>
 
                   <button
                     onClick={handleSimulateQuickScan}
-                    className="py-2.5 px-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 rounded-2xl text-xs font-black transition-all shadow-md flex items-center space-x-1.5 mx-auto"
+                    className="py-2.5 px-4 bg-[#C08552] hover:bg-[#8C5A3C] text-[#FFF8F0] rounded-2xl text-xs font-black transition-all shadow-md flex items-center space-x-1.5 mx-auto"
                   >
-                    <Zap className="w-4 h-4 text-emerald-400" />
+                    <Zap className="w-4 h-4 text-[#FFF8F0]" />
                     <span>Test Scan Member Code</span>
                   </button>
                 </div>
 
                 <div className="flex items-center my-2">
-                  <div className="flex-1 border-t border-white/10"></div>
-                  <span className="px-3 text-[10px] text-slate-400 uppercase tracking-widest font-black">
+                  <div className="flex-1 border-t border-[#8C5A3C]/20"></div>
+                  <span className="px-3 text-[10px] text-[#6B4E4B] uppercase tracking-widest font-black">
                     Or Enter 6-Digit Backup PIN
                   </span>
-                  <div className="flex-1 border-t border-white/10"></div>
+                  <div className="flex-1 border-t border-[#8C5A3C]/20"></div>
                 </div>
 
                 <div className="flex space-x-2">
@@ -292,11 +289,11 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
                     value={codeScanInput}
                     onChange={(e) => setCodeScanInput(e.target.value.toUpperCase())}
                     placeholder="e.g. SC-948210"
-                    className="flex-1 bg-slate-950 border border-white/10 rounded-2xl px-4 py-3 text-center font-mono text-base uppercase text-emerald-400 focus:outline-none focus:border-emerald-500"
+                    className="flex-1 bg-[#FFF8F0] border border-[#8C5A3C]/30 rounded-2xl px-4 py-3 text-center font-mono text-base uppercase text-[#C08552] focus:outline-none focus:border-[#C08552]"
                   />
                   <button
                     onClick={() => handleProcessScan()}
-                    className="py-3 px-5 bg-gradient-to-r from-emerald-400 to-emerald-600 text-slate-950 font-black rounded-2xl text-xs shadow-lg"
+                    className="py-3 px-5 bg-[#C08552] hover:bg-[#8C5A3C] text-[#FFF8F0] font-black rounded-2xl text-xs shadow-md"
                   >
                     Verify
                   </button>
@@ -306,16 +303,16 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
               /* TODAY TAB */
               <div className="space-y-3">
                 <div className="flex justify-between items-center px-1 text-xs">
-                  <span className="font-black uppercase tracking-wider text-slate-300">
+                  <span className="font-black uppercase tracking-wider text-[#4B2E2B]">
                     Today's Redemptions
                   </span>
-                  <span className="font-mono text-emerald-400 font-extrabold">
+                  <span className="font-mono text-[#C08552] font-extrabold">
                     {todayRedemptions.length} Drinks Served
                   </span>
                 </div>
 
                 {todayRedemptions.length === 0 ? (
-                  <div className="bg-slate-950 p-6 rounded-2xl text-center text-xs text-slate-500">
+                  <div className="bg-[#FFF8F0] p-6 rounded-2xl text-center text-xs text-[#6B4E4B]">
                     No redemptions scanned yet today.
                   </div>
                 ) : (
@@ -323,19 +320,19 @@ export const BaristaScannerView: React.FC<BaristaScannerViewProps> = ({ cafeId }
                     {todayRedemptions.map((record) => (
                       <div
                         key={record.id}
-                        className="bg-slate-950 p-3.5 rounded-2xl border border-white/10 flex items-center justify-between text-xs"
+                        className="bg-[#FFF8F0] p-3.5 rounded-2xl border border-[#8C5A3C]/15 flex items-center justify-between text-xs"
                       >
                         <div>
-                          <h4 className="font-bold text-white">{record.drinkName}</h4>
-                          <span className="text-[10px] text-slate-400">
+                          <h4 className="font-bold text-[#4B2E2B]">{record.drinkName}</h4>
+                          <span className="text-[10px] text-[#6B4E4B]">
                             Member: {record.memberName}
                           </span>
                         </div>
                         <div className="text-right font-mono">
-                          <span className="font-bold text-emerald-400">
+                          <span className="font-bold text-[#C08552]">
                             +${record.cafePayoutUsd.toFixed(2)}
                           </span>
-                          <div className="text-[9px] text-slate-500">
+                          <div className="text-[9px] text-[#6B4E4B]">
                             {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>

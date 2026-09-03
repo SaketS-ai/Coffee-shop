@@ -1,83 +1,48 @@
 @import "tailwindcss";
 
-/* --- TRENDING COFFEE SHOP THEME VARIABLES --- */
+/* --- USER PALETTE WITH LIGHT BACKGROUND ---
+   Background: Light Cream (#FFF8F0)
+   Text: Deep Dark Espresso (#4B2E2B)
+   Primary Accent: Warm Caramel (#C08552)
+   Secondary Accent: Roasted Brown (#8C5A3C)
+--- */
+
 :root {
-  --bg-primary: #1A120F;
-  --bg-secondary: #261A16;
-  --accent-primary: #C86D51;
-  --accent-secondary: #D97706;
-  --text-primary: #F4EFE6;
-  --border-subtle: rgba(232, 222, 209, 0.12);
-}
-
-[data-theme="roast_cream"] {
-  --bg-primary: #1A120F;
-  --bg-secondary: #261A16;
-  --accent-primary: #C86D51;
-  --accent-secondary: #D97706;
-  --text-primary: #F4EFE6;
-  --border-subtle: rgba(232, 222, 209, 0.15);
-}
-
-[data-theme="botanical_sage"] {
-  --bg-primary: #111815;
-  --bg-secondary: #18241F;
-  --accent-primary: #4A6B5D;
-  --accent-secondary: #F59E0B;
-  --text-primary: #EBF5F0;
-  --border-subtle: rgba(74, 107, 93, 0.2);
-}
-
-[data-theme="obsidian_gold"] {
-  --bg-primary: #0B0F17;
-  --bg-secondary: #111827;
-  --accent-primary: #F59E0B;
-  --accent-secondary: #EA580C;
-  --text-primary: #F8FAFC;
-  --border-subtle: rgba(245, 158, 11, 0.15);
+  --bg-light: #FFF8F0;
+  --bg-card: #FFFFFF;
+  --text-dark: #4B2E2B;
+  --text-muted: #6B4E4B;
+  --caramel: #C08552;
+  --roasted: #8C5A3C;
+  --espresso: #4B2E2B;
+  --border-subtle: rgba(140, 90, 60, 0.2);
 }
 
 @layer base {
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
+    background-color: #FFF8F0;
+    color: #4B2E2B;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    transition: background-color 0.4s ease, color 0.4s ease;
   }
 }
 
-/* Glassmorphism Styles */
-.glass-panel {
-  background: rgba(30, 20, 17, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-subtle);
+/* Light Mode Coffee Card Styles */
+.coffee-card-light {
+  background: #FFFFFF;
+  color: #4B2E2B;
+  border: 1px solid rgba(140, 90, 60, 0.2);
+  box-shadow: 0 4px 20px -2px rgba(75, 46, 43, 0.06);
 }
 
-.glass-panel-terracotta {
-  background: linear-gradient(135deg, rgba(200, 109, 81, 0.15), rgba(26, 18, 15, 0.85));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(200, 109, 81, 0.3);
+.coffee-card-hover:hover {
+  border-color: #C08552;
+  box-shadow: 0 10px 25px -5px rgba(192, 133, 82, 0.25);
+  transform: translateY(-2px);
 }
 
-.glass-panel-hover:hover {
-  border-color: rgba(217, 119, 6, 0.45);
-  box-shadow: 0 12px 32px -10px rgba(217, 119, 6, 0.3);
-  transform: translateY(-3px);
-}
-
-/* Ambient Glow Backgrounds */
-.amber-glow {
-  box-shadow: 0 0 50px -10px rgba(217, 119, 6, 0.35);
-}
-
-.terracotta-glow {
-  box-shadow: 0 0 50px -10px rgba(200, 109, 81, 0.35);
-}
-
-.emerald-glow {
-  box-shadow: 0 0 50px -10px rgba(16, 185, 129, 0.35);
+/* Glow Effects */
+.caramel-glow {
+  box-shadow: 0 4px 20px 0 rgba(192, 133, 82, 0.35);
 }
 
 /* Scanner Laser Line Animation */
@@ -89,17 +54,6 @@
 
 .animate-scan-laser {
   animation: scanLaser 2s ease-in-out infinite;
-}
-
-/* Floating Steam Animation */
-@keyframes steamRise {
-  0% { transform: translateY(0) scaleX(1); opacity: 0.2; }
-  50% { transform: translateY(-8px) scaleX(1.1); opacity: 0.6; }
-  100% { transform: translateY(-16px) scaleX(1.2); opacity: 0; }
-}
-
-.animate-steam-rise {
-  animation: steamRise 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Custom Scrollbars */
@@ -116,9 +70,9 @@
   height: 5px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: #FFF8F0;
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--bg-secondary);
+  background: #C08552;
   border-radius: 6px;
 }

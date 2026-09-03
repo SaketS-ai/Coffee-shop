@@ -10,7 +10,6 @@ import {
 } from '../common/CoffeeSketches';
 import { 
   Search, 
-  MapPin, 
   Star, 
   Sparkles, 
   Navigation, 
@@ -19,8 +18,7 @@ import {
   ArrowRight,
   Flame,
   Award,
-  ChevronRight,
-  Heart
+  ChevronRight
 } from 'lucide-react';
 
 interface DiscoverScreenProps {
@@ -78,43 +76,42 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
   };
 
   return (
-    <div className="space-y-8 pb-20 animate-fade-in">
-      {/* ARTISANAL COFFEE HERO BANNER WITH SKETCH ART */}
-      <div className="relative rounded-3xl overflow-hidden glass-panel-terracotta p-6 sm:p-8 border border-amber-600/30 shadow-2xl">
-        {/* Background Coffee Branch Sketch Art */}
-        <div className="absolute right-4 top-4 text-amber-200/10 pointer-events-none hidden sm:block">
+    <div className="space-y-8 pb-20 animate-fade-in text-[#4B2E2B]">
+      {/* HERO BANNER - LIGHT CREAM & WARM CARAMEL */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#FFF8F0] via-[#F4EFE6] to-[#E8DED1] p-6 sm:p-8 border border-[#8C5A3C]/20 shadow-lg">
+        {/* Background Coffee Branch Line Art */}
+        <div className="absolute right-4 top-4 text-[#C08552]/15 pointer-events-none hidden sm:block">
           <CoffeeBranchSketch className="w-64 h-64" />
         </div>
         
         <div className="max-w-2xl space-y-4 relative z-10">
           <div className="flex items-center space-x-3">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-black uppercase tracking-wider">
-              <Flame className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
-              <span>Dallas's Premier Specialty Pass</span>
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-[#C08552]/15 border border-[#C08552]/30 text-[#8C5A3C] text-xs font-black uppercase tracking-wider">
+              <Flame className="w-3.5 h-3.5 text-[#C08552] animate-bounce" />
+              <span>Dallas's Specialty Pass</span>
             </div>
             
-            {/* Artisanal Stamp Seal */}
-            <ArtisanalStampBadge className="w-10 h-10 text-amber-400/80 animate-spin-slow hidden sm:block" />
+            <ArtisanalStampBadge className="w-10 h-10 text-[#C08552] hidden sm:block" />
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#4B2E2B] leading-tight">
             Taste Dallas Craft Roasters, <br />
-            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-orange-300 bg-clip-text text-transparent">
+            <span className="text-[#C08552]">
               One Handcrafted Cup at a Time.
             </span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-amber-100/90 font-medium leading-relaxed max-w-xl">
+          <p className="text-xs sm:text-sm text-[#6B4E4B] font-medium leading-relaxed max-w-xl">
             Enjoy 30 drink credits every month across Dallas's curated independent cafe network. Discover micro-lots, rate signature roasts, and maintain your personal tasting diary.
           </p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
-            <div className="flex items-center space-x-2 bg-[#1A120F]/90 px-4 py-2 rounded-2xl border border-amber-900/40 text-xs font-bold text-amber-200">
-              <V60PourOverSketch className="w-5 h-5 text-amber-400" />
+            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-2xl border border-[#8C5A3C]/20 text-xs font-bold text-[#4B2E2B] shadow-sm">
+              <V60PourOverSketch className="w-5 h-5 text-[#C08552]" />
               <span>30 Credits / Month</span>
             </div>
-            <div className="flex items-center space-x-2 bg-[#1A120F]/90 px-4 py-2 rounded-2xl border border-amber-900/40 text-xs font-bold text-amber-200">
-              <PortafilterSketch className="w-5 h-5 text-amber-400" />
+            <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-2xl border border-[#8C5A3C]/20 text-xs font-bold text-[#4B2E2B] shadow-sm">
+              <PortafilterSketch className="w-5 h-5 text-[#C08552]" />
               <span>1 Credit = $1.00 Value</span>
             </div>
           </div>
@@ -125,38 +122,38 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-widest text-amber-400">
+            <span className="text-[11px] font-black uppercase tracking-widest text-[#C08552]">
               Curated Dallas Network
             </span>
-            <h2 className="text-xl font-black text-white flex items-center space-x-2">
+            <h2 className="text-xl font-black text-[#4B2E2B] flex items-center space-x-2">
               <span>Explore Partner Cafes</span>
-              <Compass className="w-5 h-5 text-amber-400" />
+              <Compass className="w-5 h-5 text-[#C08552]" />
             </h2>
           </div>
 
           <button
             onClick={() => setUseDistanceSort(!useDistanceSort)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs font-extrabold transition-all border shadow-lg ${
+            className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs font-extrabold transition-all border shadow-sm ${
               useDistanceSort
-                ? 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-amber-500/10'
-                : 'bg-[#1A120F] text-slate-400 border-amber-900/40'
+                ? 'bg-[#C08552] text-[#FFF8F0] border-[#C08552]'
+                : 'bg-white text-[#4B2E2B] border-[#8C5A3C]/20'
             }`}
           >
-            <Navigation className={`w-4 h-4 ${useDistanceSort ? 'text-amber-400' : 'text-slate-500'}`} />
+            <Navigation className={`w-4 h-4 ${useDistanceSort ? 'text-[#FFF8F0]' : 'text-[#C08552]'}`} />
             <span>{useDistanceSort ? 'Nearest First (GPS)' : 'Order by Saved Area'}</span>
           </button>
         </div>
 
-        {/* Search Input Bar */}
+        {/* Search Bar */}
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search cafes by name, neighborhood (Deep Ellum, Bishop Arts), or vibe (Remote Work)..."
-            className="w-full bg-[#1A120F]/90 border border-amber-900/40 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-slate-100 placeholder-amber-200/40 focus:outline-none focus:border-amber-500/60 shadow-inner"
+            placeholder="Search cafes by name, neighborhood (Deep Ellum, Bishop Arts), or vibe..."
+            className="w-full bg-white border border-[#8C5A3C]/25 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-[#4B2E2B] placeholder-[#6B4E4B]/50 focus:outline-none focus:border-[#C08552] shadow-sm"
           />
-          <Search className="w-5 h-5 text-amber-400/60 absolute left-3.5 top-3.5" />
+          <Search className="w-5 h-5 text-[#C08552] absolute left-3.5 top-3.5" />
         </div>
 
         {/* Neighborhood Filter Pills */}
@@ -167,8 +164,8 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
               onClick={() => setSelectedNeighborhood(nh.id)}
               className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center space-x-1.5 ${
                 selectedNeighborhood === nh.id
-                  ? 'bg-gradient-to-r from-amber-600 to-amber-700 text-amber-100 shadow-lg shadow-amber-900/40'
-                  : 'bg-[#1A120F] text-amber-200/60 hover:text-amber-100 border border-amber-900/40'
+                  ? 'bg-[#C08552] text-[#FFF8F0] shadow-md'
+                  : 'bg-white text-[#6B4E4B] hover:text-[#4B2E2B] border border-[#8C5A3C]/20 shadow-sm'
               }`}
             >
               <span>{nh.icon}</span>
@@ -182,8 +179,8 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       {!searchQuery && selectedNeighborhood === 'All' && featuredCafes.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <LatteArtSketch className="w-5 h-5 text-amber-400" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">
+            <LatteArtSketch className="w-5 h-5 text-[#C08552]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#C08552]">
               Curated Featured Cafes
             </h3>
           </div>
@@ -193,7 +190,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
               <div
                 key={cafe.id}
                 onClick={() => onSelectCafe(cafe)}
-                className="glass-panel glass-panel-hover rounded-3xl overflow-hidden shadow-xl cursor-pointer group transition-all duration-300 border border-amber-900/30"
+                className="bg-white hover:border-[#C08552] rounded-3xl overflow-hidden shadow-md hover:shadow-xl cursor-pointer group transition-all duration-300 border border-[#8C5A3C]/20 flex flex-col justify-between"
               >
                 <div className="h-44 relative">
                   <img
@@ -201,27 +198,27 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                     alt={cafe.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A120F] via-[#1A120F]/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#4B2E2B]/80 via-transparent to-transparent"></div>
                   
-                  <span className="absolute top-3 right-3 bg-amber-500 text-slate-950 text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-lg">
+                  <span className="absolute top-3 right-3 bg-[#C08552] text-[#FFF8F0] text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-md">
                     ⭐ Featured
                   </span>
 
                   <div className="absolute bottom-3 left-4 right-4">
-                    <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest bg-[#1A120F]/90 px-2.5 py-0.5 rounded-full border border-amber-900/40">
+                    <span className="text-[10px] font-bold text-[#FFF8F0] uppercase tracking-widest bg-[#4B2E2B]/90 px-2.5 py-0.5 rounded-full border border-[#C08552]/40">
                       📍 {cafe.neighborhood} • {cafe.distanceMiles} mi
                     </span>
-                    <h4 className="text-lg font-black text-white mt-1 group-hover:text-amber-300 transition-colors">
+                    <h4 className="text-lg font-black text-[#FFF8F0] mt-1 group-hover:text-[#FFF8F0] transition-colors">
                       {cafe.name}
                     </h4>
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#1A120F]/90 text-xs space-y-2">
-                  <p className="text-amber-200/70 text-[11px] truncate">{cafe.perkLine}</p>
-                  <div className="flex justify-between items-center pt-1 text-slate-300 font-semibold text-[11px]">
-                    <span className="text-amber-400 font-black">Drinks from {getLowestCreditPrice(cafe.id)} Credits</span>
-                    <span className="flex items-center space-x-1 text-slate-400 group-hover:text-amber-400 transition-colors font-bold">
+                <div className="p-4 bg-white text-xs space-y-2">
+                  <p className="text-[#6B4E4B] text-[11px] truncate">{cafe.perkLine}</p>
+                  <div className="flex justify-between items-center pt-1 font-semibold text-[11px]">
+                    <span className="text-[#C08552] font-black">Drinks from {getLowestCreditPrice(cafe.id)} Credits</span>
+                    <span className="flex items-center space-x-1 text-[#8C5A3C] group-hover:text-[#C08552] transition-colors font-bold">
                       <span>View Menu</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </span>
@@ -233,12 +230,12 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
         </div>
       )}
 
-      {/* SIGNATURE DRINKS STRIP WITH ART WORK */}
+      {/* SIGNATURE DRINKS STRIP */}
       {!searchQuery && selectedNeighborhood === 'All' && signatureDrinks.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <Coffee className="w-4.5 h-4.5 text-amber-400" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-300">
+            <Coffee className="w-4.5 h-4.5 text-[#C08552]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#4B2E2B]">
               Dallas Signature Drinks & Roasts
             </h3>
           </div>
@@ -251,7 +248,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                 <div
                   key={drink.id}
                   onClick={() => onSelectDrink(drink, cafe)}
-                  className="w-56 flex-shrink-0 glass-panel glass-panel-hover rounded-3xl p-3.5 space-y-3 cursor-pointer transition-all border border-amber-900/30 group"
+                  className="w-56 flex-shrink-0 bg-white hover:border-[#C08552] rounded-3xl p-3.5 space-y-3 cursor-pointer transition-all border border-[#8C5A3C]/20 shadow-md group"
                 >
                   <div className="h-32 rounded-2xl overflow-hidden relative">
                     <img
@@ -259,23 +256,23 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                       alt={drink.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <span className="absolute top-2 left-2 bg-[#1A120F]/90 backdrop-blur-md border border-amber-500/40 text-amber-300 text-[9px] font-black uppercase px-2 py-0.5 rounded-full">
+                    <span className="absolute top-2 left-2 bg-[#C08552] text-[#FFF8F0] text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">
                       Signature
                     </span>
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-bold text-white truncate group-hover:text-amber-300 transition-colors">
+                    <h4 className="text-xs font-bold text-[#4B2E2B] truncate group-hover:text-[#C08552] transition-colors">
                       {drink.name}
                     </h4>
-                    <p className="text-[11px] text-amber-400 font-semibold truncate mt-0.5">
+                    <p className="text-[11px] text-[#C08552] font-semibold truncate mt-0.5">
                       📍 {cafe.name}
                     </p>
                   </div>
 
-                  <div className="flex justify-between items-center pt-1 text-xs border-t border-amber-900/30">
-                    <span className="text-amber-200/60 text-[11px]">Retail: ${drink.retailPrice.toFixed(2)}</span>
-                    <span className="font-extrabold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/30">
+                  <div className="flex justify-between items-center pt-1 text-xs border-t border-[#8C5A3C]/15">
+                    <span className="text-[#6B4E4B] text-[11px]">Retail: ${drink.retailPrice.toFixed(2)}</span>
+                    <span className="font-extrabold text-[#FFF8F0] bg-[#C08552] px-2 py-0.5 rounded-lg">
                       {drink.creditPrice} Credits
                     </span>
                   </div>
@@ -289,19 +286,19 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       {/* MAIN CAFE GRID */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-300">
+          <h3 className="text-xs font-black uppercase tracking-wider text-[#4B2E2B]">
             {useDistanceSort ? 'All Dallas Partner Cafes (Nearest First)' : 'Cafes by Saved Area'}
           </h3>
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-xs font-mono text-[#6B4E4B]">
             {filteredCafes.length} Partner Cafes
           </span>
         </div>
 
         {filteredCafes.length === 0 ? (
-          <div className="glass-panel rounded-3xl p-10 text-center space-y-3 border border-amber-900/30">
-            <Coffee className="w-12 h-12 text-slate-600 mx-auto" />
-            <h4 className="text-base font-bold text-slate-200">No Cafes Found</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <div className="bg-white rounded-3xl p-10 text-center space-y-3 border border-[#8C5A3C]/20 shadow-sm">
+            <Coffee className="w-12 h-12 text-[#C08552] mx-auto" />
+            <h4 className="text-base font-bold text-[#4B2E2B]">No Cafes Found</h4>
+            <p className="text-xs text-[#6B4E4B] max-w-sm mx-auto">
               No cafes matched "{searchQuery}". Try searching another term or clearing filters.
             </p>
             <button
@@ -309,7 +306,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                 setSearchQuery('');
                 setSelectedNeighborhood('All');
               }}
-              className="py-2.5 px-5 bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded-2xl text-xs font-extrabold hover:bg-amber-500/25 transition-all"
+              className="py-2.5 px-5 bg-[#C08552] text-[#FFF8F0] rounded-2xl text-xs font-extrabold transition-all"
             >
               Clear Filters
             </button>
@@ -322,7 +319,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                 <div
                   key={cafe.id}
                   onClick={() => onSelectCafe(cafe)}
-                  className="glass-panel glass-panel-hover rounded-3xl overflow-hidden shadow-xl cursor-pointer group transition-all duration-300 border border-amber-900/30 flex flex-col justify-between"
+                  className="bg-white hover:border-[#C08552] rounded-3xl overflow-hidden shadow-md hover:shadow-xl cursor-pointer group transition-all duration-300 border border-[#8C5A3C]/20 flex flex-col justify-between"
                 >
                   <div>
                     <div className="h-48 relative">
@@ -331,20 +328,20 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                         alt={cafe.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#1A120F] via-[#1A120F]/20 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#4B2E2B]/80 via-transparent to-transparent"></div>
 
-                      <div className="absolute top-3 right-3 bg-[#1A120F]/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-amber-900/40 flex items-center space-x-1">
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        <span className="text-xs font-black text-white">
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-[#8C5A3C]/20 flex items-center space-x-1 shadow-sm">
+                        <Star className="w-3.5 h-3.5 text-[#C08552] fill-[#C08552]" />
+                        <span className="text-xs font-black text-[#4B2E2B]">
                           {cafe.ratingCount > 0 ? cafe.rating.toFixed(1) : 'New'}
                         </span>
                       </div>
 
                       <div className="absolute bottom-3 left-3 right-3">
-                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest bg-[#1A120F]/90 px-2.5 py-0.5 rounded-full border border-amber-900/40">
+                        <span className="text-[10px] font-bold text-[#FFF8F0] uppercase tracking-widest bg-[#4B2E2B]/90 px-2.5 py-0.5 rounded-full border border-[#C08552]/40">
                           📍 {cafe.neighborhood} • {cafe.distanceMiles} mi
                         </span>
-                        <h4 className="text-lg font-black text-white mt-1 group-hover:text-amber-300 transition-colors">
+                        <h4 className="text-lg font-black text-[#FFF8F0] mt-1 group-hover:text-[#FFF8F0] transition-colors">
                           {cafe.name}
                         </h4>
                       </div>
@@ -355,7 +352,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                         {cafe.vibeTags.map((tag) => (
                           <span
                             key={tag}
-                            className="text-[10px] bg-[#1A120F] text-amber-200/70 border border-amber-900/40 px-2.5 py-0.5 rounded-lg font-medium"
+                            className="text-[10px] bg-[#FFF8F0] text-[#4B2E2B] border border-[#8C5A3C]/20 px-2.5 py-0.5 rounded-lg font-semibold"
                           >
                             {tag}
                           </span>
@@ -364,11 +361,11 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                     </div>
                   </div>
 
-                  <div className="p-4 pt-0 flex items-center justify-between border-t border-amber-900/20 text-xs">
-                    <span className="text-amber-400 font-black text-xs">
+                  <div className="p-4 pt-0 flex items-center justify-between border-t border-[#8C5A3C]/15 text-xs">
+                    <span className="text-[#C08552] font-black text-xs">
                       Drinks from {lowestCredits} credits
                     </span>
-                    <span className="text-amber-200/60 font-bold flex items-center space-x-1 group-hover:text-amber-300 transition-colors">
+                    <span className="text-[#8C5A3C] font-bold flex items-center space-x-1 group-hover:text-[#C08552] transition-colors">
                       <span>View Menu</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>

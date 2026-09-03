@@ -11,15 +11,8 @@ import { store } from '../../services/store';
 import { 
   Compass, 
   Coffee, 
-  User, 
   Sparkles, 
-  CreditCard,
-  BookOpen,
-  MapPin,
-  Search,
-  ShieldCheck,
-  CheckCircle2,
-  ExternalLink
+  BookOpen
 } from 'lucide-react';
 
 export const WebMemberApp: React.FC = () => {
@@ -58,18 +51,18 @@ export const WebMemberApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#FFF8F0] text-[#4B2E2B] flex flex-col">
       {/* Secondary Web Application Top Nav Bar */}
-      <nav className="bg-slate-900/90 border-b border-slate-800 sticky top-14 z-40 backdrop-blur-md">
+      <nav className="bg-[#FFF8F0]/90 border-b border-[#8C5A3C]/15 sticky top-14 z-40 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           {/* Navigation Links */}
           <div className="flex items-center space-x-1 sm:space-x-4">
             <button
               onClick={() => setActiveTab('discover')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
                 activeTab === 'discover'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-[#C08552] text-[#FFF8F0] shadow-md shadow-[#C08552]/20'
+                  : 'text-[#8C5A3C] hover:text-[#4B2E2B] hover:bg-[#F4EFE6]'
               }`}
             >
               <Compass className="w-4 h-4" />
@@ -81,10 +74,10 @@ export const WebMemberApp: React.FC = () => {
                 if (selectedCafe) setActiveTab('cafe_detail');
                 else setActiveTab('discover');
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
                 activeTab === 'cafe_detail'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-[#C08552] text-[#FFF8F0] shadow-md shadow-[#C08552]/20'
+                  : 'text-[#8C5A3C] hover:text-[#4B2E2B] hover:bg-[#F4EFE6]'
               }`}
             >
               <Coffee className="w-4 h-4" />
@@ -93,10 +86,10 @@ export const WebMemberApp: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center space-x-1.5 ${
                 activeTab === 'profile'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  ? 'bg-[#C08552] text-[#FFF8F0] shadow-md shadow-[#C08552]/20'
+                  : 'text-[#8C5A3C] hover:text-[#4B2E2B] hover:bg-[#F4EFE6]'
               }`}
             >
               <BookOpen className="w-4 h-4" />
@@ -108,7 +101,7 @@ export const WebMemberApp: React.FC = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setIsAuthOpen(true)}
-              className="hidden md:flex items-center space-x-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300"
+              className="hidden md:flex items-center space-x-2 bg-white hover:bg-[#F4EFE6] border border-[#8C5A3C]/20 px-3 py-1.5 rounded-xl text-xs font-bold text-[#4B2E2B] shadow-sm"
             >
               <img src={member.avatarUrl} alt={member.name} className="w-5 h-5 rounded-full object-cover" />
               <span>{member.name}</span>
@@ -117,17 +110,17 @@ export const WebMemberApp: React.FC = () => {
             {member.accountState === 'member' ? (
               <button
                 onClick={() => setActiveTab('profile')}
-                className="flex items-center space-x-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-xl text-xs font-black"
+                className="flex items-center space-x-1.5 bg-[#C08552]/15 border border-[#C08552]/30 text-[#8C5A3C] px-3.5 py-1.5 rounded-xl text-xs font-black"
               >
-                <Sparkles className="w-3.5 h-3.5 fill-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-[#C08552]" />
                 <span>{member.credits} Credits Available</span>
               </button>
             ) : (
               <button
                 onClick={() => setIsCheckoutOpen(true)}
-                className="flex items-center space-x-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-lg shadow-amber-500/20"
+                className="flex items-center space-x-1.5 bg-[#C08552] hover:bg-[#8C5A3C] text-[#FFF8F0] px-4 py-2 rounded-xl text-xs font-black shadow-md shadow-[#C08552]/20 transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                <Sparkles className="w-3.5 h-3.5 fill-[#FFF8F0]" />
                 <span>Subscribe ($24.99/mo)</span>
               </button>
             )}
@@ -135,7 +128,7 @@ export const WebMemberApp: React.FC = () => {
         </div>
       </nav>
 
-      {/* Main Full-Bleed Web Content Body */}
+      {/* Main Full-Bleed Light Body */}
       <div className="max-w-6xl mx-auto w-full px-4 py-6 flex-1">
         {activeTab === 'discover' && (
           <DiscoverScreen
