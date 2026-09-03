@@ -1,37 +1,79 @@
 @import "tailwindcss";
 
+/* --- TRENDING COFFEE SHOP THEME VARIABLES --- */
+:root {
+  --bg-primary: #1A120F;
+  --bg-secondary: #261A16;
+  --accent-primary: #C86D51;
+  --accent-secondary: #D97706;
+  --text-primary: #F4EFE6;
+  --border-subtle: rgba(232, 222, 209, 0.12);
+}
+
+[data-theme="roast_cream"] {
+  --bg-primary: #1A120F;
+  --bg-secondary: #261A16;
+  --accent-primary: #C86D51;
+  --accent-secondary: #D97706;
+  --text-primary: #F4EFE6;
+  --border-subtle: rgba(232, 222, 209, 0.15);
+}
+
+[data-theme="botanical_sage"] {
+  --bg-primary: #111815;
+  --bg-secondary: #18241F;
+  --accent-primary: #4A6B5D;
+  --accent-secondary: #F59E0B;
+  --text-primary: #EBF5F0;
+  --border-subtle: rgba(74, 107, 93, 0.2);
+}
+
+[data-theme="obsidian_gold"] {
+  --bg-primary: #0B0F17;
+  --bg-secondary: #111827;
+  --accent-primary: #F59E0B;
+  --accent-secondary: #EA580C;
+  --text-primary: #F8FAFC;
+  --border-subtle: rgba(245, 158, 11, 0.15);
+}
+
 @layer base {
   body {
-    background-color: #0B0F17;
-    color: #F8FAFC;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.4s ease, color 0.4s ease;
   }
 }
 
-/* Custom Glassmorphism Classes */
+/* Glassmorphism Styles */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(30, 20, 17, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-subtle);
 }
 
-.glass-panel-amber {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.85));
+.glass-panel-terracotta {
+  background: linear-gradient(135deg, rgba(200, 109, 81, 0.15), rgba(26, 18, 15, 0.85));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(245, 158, 11, 0.25);
+  border: 1px solid rgba(200, 109, 81, 0.3);
 }
 
 .glass-panel-hover:hover {
-  border-color: rgba(245, 158, 11, 0.4);
-  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.25);
-  transform: translateY(-2px);
+  border-color: rgba(217, 119, 6, 0.45);
+  box-shadow: 0 12px 32px -10px rgba(217, 119, 6, 0.3);
+  transform: translateY(-3px);
 }
 
 /* Ambient Glow Backgrounds */
 .amber-glow {
-  box-shadow: 0 0 50px -10px rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 50px -10px rgba(217, 119, 6, 0.35);
+}
+
+.terracotta-glow {
+  box-shadow: 0 0 50px -10px rgba(200, 109, 81, 0.35);
 }
 
 .emerald-glow {
@@ -49,16 +91,15 @@
   animation: scanLaser 2s ease-in-out infinite;
 }
 
-/* Shimmer Animation */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Floating Steam Animation */
+@keyframes steamRise {
+  0% { transform: translateY(0) scaleX(1); opacity: 0.2; }
+  50% { transform: translateY(-8px) scaleX(1.1); opacity: 0.6; }
+  100% { transform: translateY(-16px) scaleX(1.2); opacity: 0; }
 }
 
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
+.animate-steam-rise {
+  animation: steamRise 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Custom Scrollbars */
@@ -75,12 +116,9 @@
   height: 5px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #0B0F17;
+  background: var(--bg-primary);
 }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: var(--bg-secondary);
   border-radius: 6px;
-}
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #334155;
 }

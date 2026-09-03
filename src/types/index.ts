@@ -2,6 +2,8 @@ export type UserRole = 'visitor' | 'member' | 'barista' | 'admin';
 
 export type AccountStatus = 'active' | 'inactive' | 'payment_failed';
 
+export type CoffeeTheme = 'roast_cream' | 'botanical_sage' | 'obsidian_gold';
+
 export interface MemberProfile {
   id: string;
   name: string;
