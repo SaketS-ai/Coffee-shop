@@ -3,8 +3,13 @@
 /* --- USER PALETTE WITH LIGHT BACKGROUND ---
    Background: Light Cream (#FFF8F0)
    Text: Deep Dark Espresso (#4B2E2B)
-   Primary Accent: Warm Caramel (#C08552)
-   Secondary Accent: Roasted Brown (#8C5A3C)
+   Decorative Accent: Warm Caramel (#C08552) - borders, icons, non-text-bearing
+   highlights only. #C08552 text/background under ~18px bold fails WCAG AA
+   contrast (2.97:1) against both cream and white - never pair it with cream
+   text, and never use it as body text on a light background.
+   Button Accent: Roasted Brown (#8C5A3C) - the safe, accessible color for
+   any surface that carries cream/white text (buttons, badges, active
+   pills). 5.5:1+ against cream/white text, comfortably passing WCAG AA.
 --- */
 
 :root {
@@ -18,11 +23,54 @@
   --border-subtle: rgba(140, 90, 60, 0.2);
 }
 
+/* Semantic color tokens (Tailwind v4 @theme) - generates bg-accent,
+   text-on-accent, bg-caramel, text-ink, etc. as real utility classes, so
+   new/edited code can reference a name instead of re-typing raw hex.
+   Existing untouched raw-hex classes elsewhere keep working unchanged. */
+@theme {
+  --color-cream: #FFF8F0;
+  --color-card: #FFFFFF;
+  --color-surface: #F4EFE6;
+  --color-ink: #4B2E2B;
+  --color-muted: #6B4E4B;
+  --color-caramel: #C08552;
+  --color-espresso-dark: #3D2523;
+
+  /* Accessible pairing for any text-bearing accent surface (buttons,
+     badges, active tabs) - see the palette note above. */
+  --color-accent: #8C5A3C;
+  --color-accent-hover: #4B2E2B;
+  --color-on-accent: #FFF8F0;
+}
+
 @layer base {
   body {
     background-color: #FFF8F0;
     color: #4B2E2B;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Visible keyboard-focus indicator wherever focus:outline-none is used - a
+   color-only border change alone isn't reliable enough for low-vision/
+   colorblind users. Deliberately NOT inside @layer: Tailwind's utilities
+   layer (where focus:outline-none compiles to) always outranks any @layer
+   base/components rule regardless of source order, but unlayered CSS
+   outranks every layer - this is what makes the outline win back. */
+:focus-visible {
+  outline: 2px solid #8C5A3C;
+  outline-offset: 2px;
+}
+
+/* Respect the OS-level motion preference - none of animate-pulse,
+   animate-ping, or the modal zoom/fade transitions have a fallback
+   otherwise. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

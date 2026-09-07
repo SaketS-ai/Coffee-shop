@@ -101,7 +101,7 @@ export const ArtisanalStampBadge: React.FC<{ className?: string }> = ({ classNam
 
     {/* Curved Text Path */}
     <path id="textPath" d="M 22,60 A 38,38 0 1,1 98,60" fill="none" />
-    <text textAnchor="middle" fill="currentColor" className="text-[9px] font-black uppercase tracking-widest">
+    <text textAnchor="middle" fill="currentColor" className="text-[11px] font-black uppercase tracking-widest">
       <textPath href="#textPath" startOffset="50%">
         ★ DALLAS CRAFT COFFEE ★
       </textPath>

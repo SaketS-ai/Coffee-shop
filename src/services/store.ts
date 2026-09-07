@@ -197,17 +197,24 @@ class Store {
 
   public validateAndRedeemCode(cafeId: string, inputCode: string): ScanResult {
     const codes = this.getRedemptionCodes();
-    const cleanCode = inputCode.trim().toUpperCase();
+    const rawInput = inputCode.trim();
 
-    const codeObj = codes.find((c) => {
-      if (c.code === cleanCode) return true;
-      try {
-        const parsed = JSON.parse(cleanCode);
-        return parsed.code === c.code || parsed.memberId === c.memberId;
-      } catch {
-        return false;
+    // A camera scan submits the raw QR JSON payload; parse it before case-folding
+    // so its "code" key survives, then match strictly on that code.
+    let codeObj: RedemptionCode | undefined;
+    try {
+      const parsed = JSON.parse(rawInput);
+      if (parsed && typeof parsed.code === 'string') {
+        codeObj = codes.find((c) => c.code === parsed.code);
       }
-    });
+    } catch {
+      // Not JSON - the barista typed the 6-digit backup code instead.
+    }
+
+    if (!codeObj) {
+      const cleanCode = rawInput.toUpperCase();
+      codeObj = codes.find((c) => c.code === cleanCode);
+    }
 
     if (!codeObj) {
       return { success: false, reason: 'INVALID_CODE' };

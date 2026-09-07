@@ -40,6 +40,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({ isOpen, onClose, drink
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="text-slate-400 hover:text-slate-200 p-1.5 rounded-full hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />

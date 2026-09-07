@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { store } from '../../services/store';
+import { api } from '../../services/api';
 import { Cafe, Drink } from '../../types';
 import { 
   V60PourOverSketch, 
@@ -28,37 +29,75 @@ interface DiscoverScreenProps {
 
 export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, onSelectDrink }) => {
   const member = store.getMember();
-  const cafes = store.getCafes();
-  const drinks = store.getDrinks();
+
+  const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>('All');
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [useDistanceSort, setUseDistanceSort] = useState<boolean>(true);
+
+  // Debounce: wait for a pause in typing before hitting the backend, rather
+  // than firing a request on every keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Real server-side search + city filter (Phase 4). Client-side text
+  // filtering is gone - the backend now does name/address/city matching.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCafes() {
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const { cafes: results } = await api.getCafes({
+          search: debouncedSearch || undefined,
+          city: selectedNeighborhood !== 'All' ? selectedNeighborhood : undefined,
+        });
+        if (cancelled) return;
+        setCafes(results);
+
+        // Only refresh the city-pill list from an unfiltered load, so an
+        // active filter doesn't shrink the pill options themselves.
+        if (!debouncedSearch && selectedNeighborhood === 'All') {
+          const cities = Array.from(new Set(results.map((c) => c.neighborhood))).sort();
+          setAvailableCities(cities);
+        }
+      } catch (err: any) {
+        if (!cancelled) setLoadError(err.message || 'Could not reach the Social Cup backend.');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    loadCafes();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearch, selectedNeighborhood]);
+
+  // Signature drinks and per-cafe "New Dallas Signature Drinks" aren't in the
+  // Phase 1/3 database schema yet (no isSignature column) - this stays empty
+  // until that's modeled, and the section below hides itself when it is.
+  const drinks: Drink[] = [];
 
   const neighborhoods = [
     { id: 'All', label: 'All Dallas', icon: '📍' },
-    { id: 'Deep Ellum', label: 'Deep Ellum', icon: '🎨' },
-    { id: 'Bishop Arts', label: 'Bishop Arts', icon: '🎭' },
-    { id: 'Knox-Henderson', label: 'Knox-Henderson', icon: '☕' },
-    { id: 'Uptown', label: 'Uptown', icon: '🌆' },
-    { id: 'Oak Lawn', label: 'Oak Lawn', icon: '🌿' },
+    ...availableCities.map((city) => ({ id: city, label: city, icon: '📍' })),
   ];
 
   const featuredCafes = cafes.filter((c) => c.isFeatured);
   const signatureDrinks = drinks.filter((d) => d.isSignature && d.isActive);
 
-  let filteredCafes = cafes.filter((cafe) => {
-    const matchesSearch =
-      cafe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cafe.neighborhood.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cafe.vibeTags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesNeighborhood =
-      selectedNeighborhood === 'All' || cafe.neighborhood === selectedNeighborhood;
-
-    return matchesSearch && matchesNeighborhood;
-  });
-
+  // Search/city filtering already happened server-side - this is display
+  // ordering only.
+  let filteredCafes = cafes;
   if (useDistanceSort) {
     filteredCafes = [...filteredCafes].sort((a, b) => a.distanceMiles - b.distanceMiles);
   } else {
@@ -75,6 +114,26 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
     return Math.min(...cafeDrinks.map((d) => d.creditPrice));
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4 pb-20 animate-fade-in">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="h-24 bg-white rounded-3xl border border-[#8C5A3C]/20 shadow-sm animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-white rounded-3xl p-10 text-center space-y-3 border border-[#8C5A3C]/20 shadow-sm animate-fade-in">
+        <Coffee className="w-12 h-12 text-[#8C5A3C] mx-auto" />
+        <h4 className="text-base font-bold text-[#4B2E2B]">Can't Reach Social Cup Right Now</h4>
+        <p className="text-xs text-[#6B4E4B] max-w-sm mx-auto">{loadError}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 pb-20 animate-fade-in text-[#4B2E2B]">
       {/* HERO BANNER - LIGHT CREAM & WARM CARAMEL */}
@@ -87,16 +146,16 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
         <div className="max-w-2xl space-y-4 relative z-10">
           <div className="flex items-center space-x-3">
             <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-[#C08552]/15 border border-[#C08552]/30 text-[#8C5A3C] text-xs font-black uppercase tracking-wider">
-              <Flame className="w-3.5 h-3.5 text-[#C08552] animate-bounce" />
+              <Flame className="w-3.5 h-3.5 text-[#8C5A3C] animate-bounce" />
               <span>Dallas's Specialty Pass</span>
             </div>
             
-            <ArtisanalStampBadge className="w-10 h-10 text-[#C08552] hidden sm:block" />
+            <ArtisanalStampBadge className="w-10 h-10 text-[#8C5A3C] hidden sm:block" />
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#4B2E2B] leading-tight">
             Taste Dallas Craft Roasters, <br />
-            <span className="text-[#C08552]">
+            <span className="text-[#8C5A3C]">
               One Handcrafted Cup at a Time.
             </span>
           </h1>
@@ -107,11 +166,11 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-2xl border border-[#8C5A3C]/20 text-xs font-bold text-[#4B2E2B] shadow-sm">
-              <V60PourOverSketch className="w-5 h-5 text-[#C08552]" />
+              <V60PourOverSketch className="w-5 h-5 text-[#8C5A3C]" />
               <span>30 Credits / Month</span>
             </div>
             <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-2xl border border-[#8C5A3C]/20 text-xs font-bold text-[#4B2E2B] shadow-sm">
-              <PortafilterSketch className="w-5 h-5 text-[#C08552]" />
+              <PortafilterSketch className="w-5 h-5 text-[#8C5A3C]" />
               <span>1 Credit = $1.00 Value</span>
             </div>
           </div>
@@ -122,12 +181,12 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <span className="text-[11px] font-black uppercase tracking-widest text-[#C08552]">
+            <span className="text-[11px] font-black uppercase tracking-widest text-[#8C5A3C]">
               Curated Dallas Network
             </span>
             <h2 className="text-xl font-black text-[#4B2E2B] flex items-center space-x-2">
               <span>Explore Partner Cafes</span>
-              <Compass className="w-5 h-5 text-[#C08552]" />
+              <Compass className="w-5 h-5 text-[#8C5A3C]" />
             </h2>
           </div>
 
@@ -135,11 +194,11 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
             onClick={() => setUseDistanceSort(!useDistanceSort)}
             className={`flex items-center space-x-2 px-4 py-2 rounded-2xl text-xs font-extrabold transition-all border shadow-sm ${
               useDistanceSort
-                ? 'bg-[#C08552] text-[#FFF8F0] border-[#C08552]'
+                ? 'bg-accent text-on-accent border-[#C08552]'
                 : 'bg-white text-[#4B2E2B] border-[#8C5A3C]/20'
             }`}
           >
-            <Navigation className={`w-4 h-4 ${useDistanceSort ? 'text-[#FFF8F0]' : 'text-[#C08552]'}`} />
+            <Navigation className={`w-4 h-4 ${useDistanceSort ? 'text-[#FFF8F0]' : 'text-[#8C5A3C]'}`} />
             <span>{useDistanceSort ? 'Nearest First (GPS)' : 'Order by Saved Area'}</span>
           </button>
         </div>
@@ -153,7 +212,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
             placeholder="Search cafes by name, neighborhood (Deep Ellum, Bishop Arts), or vibe..."
             className="w-full bg-white border border-[#8C5A3C]/25 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-[#4B2E2B] placeholder-[#6B4E4B]/50 focus:outline-none focus:border-[#C08552] shadow-sm"
           />
-          <Search className="w-5 h-5 text-[#C08552] absolute left-3.5 top-3.5" />
+          <Search className="w-5 h-5 text-[#8C5A3C] absolute left-3.5 top-3.5" />
         </div>
 
         {/* Neighborhood Filter Pills */}
@@ -164,7 +223,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
               onClick={() => setSelectedNeighborhood(nh.id)}
               className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all flex items-center space-x-1.5 ${
                 selectedNeighborhood === nh.id
-                  ? 'bg-[#C08552] text-[#FFF8F0] shadow-md'
+                  ? 'bg-accent text-on-accent shadow-md'
                   : 'bg-white text-[#6B4E4B] hover:text-[#4B2E2B] border border-[#8C5A3C]/20 shadow-sm'
               }`}
             >
@@ -179,8 +238,8 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       {!searchQuery && selectedNeighborhood === 'All' && featuredCafes.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <LatteArtSketch className="w-5 h-5 text-[#C08552]" />
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#C08552]">
+            <LatteArtSketch className="w-5 h-5 text-[#8C5A3C]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#8C5A3C]">
               Curated Featured Cafes
             </h3>
           </div>
@@ -200,7 +259,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#4B2E2B]/80 via-transparent to-transparent"></div>
                   
-                  <span className="absolute top-3 right-3 bg-[#C08552] text-[#FFF8F0] text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-md">
+                  <span className="absolute top-3 right-3 bg-accent text-on-accent text-[10px] font-black uppercase px-2.5 py-1 rounded-full shadow-md">
                     ⭐ Featured
                   </span>
 
@@ -217,8 +276,8 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                 <div className="p-4 bg-white text-xs space-y-2">
                   <p className="text-[#6B4E4B] text-[11px] truncate">{cafe.perkLine}</p>
                   <div className="flex justify-between items-center pt-1 font-semibold text-[11px]">
-                    <span className="text-[#C08552] font-black">Drinks from {getLowestCreditPrice(cafe.id)} Credits</span>
-                    <span className="flex items-center space-x-1 text-[#8C5A3C] group-hover:text-[#C08552] transition-colors font-bold">
+                    <span className="text-[#8C5A3C] font-black">Drinks from {getLowestCreditPrice(cafe.id)} Credits</span>
+                    <span className="flex items-center space-x-1 text-[#8C5A3C] group-hover:text-[#8C5A3C] transition-colors font-bold">
                       <span>View Menu</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </span>
@@ -234,7 +293,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
       {!searchQuery && selectedNeighborhood === 'All' && signatureDrinks.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center space-x-2">
-            <Coffee className="w-4.5 h-4.5 text-[#C08552]" />
+            <Coffee className="w-4.5 h-4.5 text-[#8C5A3C]" />
             <h3 className="text-xs font-black uppercase tracking-wider text-[#4B2E2B]">
               Dallas Signature Drinks & Roasts
             </h3>
@@ -256,23 +315,23 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                       alt={drink.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <span className="absolute top-2 left-2 bg-[#C08552] text-[#FFF8F0] text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow">
+                    <span className="absolute top-2 left-2 bg-accent text-on-accent text-[11px] font-black uppercase px-2 py-0.5 rounded-full shadow">
                       Signature
                     </span>
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-bold text-[#4B2E2B] truncate group-hover:text-[#C08552] transition-colors">
+                    <h4 className="text-xs font-bold text-[#4B2E2B] truncate group-hover:text-[#8C5A3C] transition-colors">
                       {drink.name}
                     </h4>
-                    <p className="text-[11px] text-[#C08552] font-semibold truncate mt-0.5">
+                    <p className="text-[11px] text-[#8C5A3C] font-semibold truncate mt-0.5">
                       📍 {cafe.name}
                     </p>
                   </div>
 
                   <div className="flex justify-between items-center pt-1 text-xs border-t border-[#8C5A3C]/15">
                     <span className="text-[#6B4E4B] text-[11px]">Retail: ${drink.retailPrice.toFixed(2)}</span>
-                    <span className="font-extrabold text-[#FFF8F0] bg-[#C08552] px-2 py-0.5 rounded-lg">
+                    <span className="font-extrabold text-on-accent bg-accent px-2 py-0.5 rounded-lg">
                       {drink.creditPrice} Credits
                     </span>
                   </div>
@@ -296,17 +355,19 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
 
         {filteredCafes.length === 0 ? (
           <div className="bg-white rounded-3xl p-10 text-center space-y-3 border border-[#8C5A3C]/20 shadow-sm">
-            <Coffee className="w-12 h-12 text-[#C08552] mx-auto" />
+            <Coffee className="w-12 h-12 text-[#8C5A3C] mx-auto" />
             <h4 className="text-base font-bold text-[#4B2E2B]">No Cafes Found</h4>
             <p className="text-xs text-[#6B4E4B] max-w-sm mx-auto">
-              No cafes matched "{searchQuery}". Try searching another term or clearing filters.
+              {searchQuery
+                ? `No cafes matched "${searchQuery}". Try searching another term or clearing filters.`
+                : 'No cafes matched this filter. Try clearing it.'}
             </p>
             <button
               onClick={() => {
                 setSearchQuery('');
                 setSelectedNeighborhood('All');
               }}
-              className="py-2.5 px-5 bg-[#C08552] text-[#FFF8F0] rounded-2xl text-xs font-extrabold transition-all"
+              className="py-2.5 px-5 bg-accent text-on-accent rounded-2xl text-xs font-extrabold transition-all"
             >
               Clear Filters
             </button>
@@ -331,7 +392,7 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                       <div className="absolute inset-0 bg-gradient-to-t from-[#4B2E2B]/80 via-transparent to-transparent"></div>
 
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-[#8C5A3C]/20 flex items-center space-x-1 shadow-sm">
-                        <Star className="w-3.5 h-3.5 text-[#C08552] fill-[#C08552]" />
+                        <Star className="w-3.5 h-3.5 text-[#8C5A3C] fill-[#8C5A3C]" />
                         <span className="text-xs font-black text-[#4B2E2B]">
                           {cafe.ratingCount > 0 ? cafe.rating.toFixed(1) : 'New'}
                         </span>
@@ -362,10 +423,10 @@ export const DiscoverScreen: React.FC<DiscoverScreenProps> = ({ onSelectCafe, on
                   </div>
 
                   <div className="p-4 pt-0 flex items-center justify-between border-t border-[#8C5A3C]/15 text-xs">
-                    <span className="text-[#C08552] font-black text-xs">
+                    <span className="text-[#8C5A3C] font-black text-xs">
                       Drinks from {lowestCredits} credits
                     </span>
-                    <span className="text-[#8C5A3C] font-bold flex items-center space-x-1 group-hover:text-[#C08552] transition-colors">
+                    <span className="text-[#8C5A3C] font-bold flex items-center space-x-1 group-hover:text-[#8C5A3C] transition-colors">
                       <span>View Menu</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>

@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Admin-uploaded cafe/drink photos (local disk storage, not committed)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Environment variables / secrets (never commit real Stripe/DB/JWT keys)
+.env
+.env.*
+!.env.example
+!*/.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
