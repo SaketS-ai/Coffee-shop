@@ -8,6 +8,7 @@ import {
 } from '../controllers/redemption.controller';
 import { requireAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/requireRole';
+import { requireScannerAuth } from '../middleware/scannerAuth';
 
 export const redemptionRouter = Router();
 
@@ -22,3 +23,4 @@ redemptionRouter.delete('/redemptions/current', requireAuth, cancelCurrentRedemp
 // yet (Phase 7) - this phase only needs the endpoint itself to exist and be
 // testable directly.
 redemptionRouter.post('/redemptions/redeem', requireAuth, requireRole('BARISTA', 'ADMIN'), redeemHandler);
+redemptionRouter.post('/scanner/redemptions/redeem', requireScannerAuth, redeemHandler);

@@ -12,6 +12,7 @@ import {
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { isNonEmptyString, isValidPrice } from '../utils/validators';
+import { setCafePin } from '../services/scanner.service';
 
 function parsePositiveInt(value: unknown): number | undefined {
   if (typeof value !== 'string' || value.trim() === '') return undefined;
@@ -32,6 +33,14 @@ function csvEscape(value: string): string {
 export const getDashboardHandler = asyncHandler(async (_req: Request, res: Response) => {
   const summary = await getDashboardSummary();
   res.status(200).json({ summary });
+});
+
+export const setCafePinHandler = asyncHandler(async (req: Request, res: Response) => {
+  if (typeof req.body?.pin !== 'string') {
+    throw new AppError(400, 'pin is required.', 'INVALID_PIN');
+  }
+  await setCafePin(req.params.cafeId, req.body.pin);
+  res.status(200).json({ success: true });
 });
 
 function parseLogFilters(query: Request['query']) {

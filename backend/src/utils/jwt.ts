@@ -8,6 +8,7 @@ import { UserRole } from '@prisma/client';
 export interface AuthTokenPayload {
   sub: string; // user id
   role: UserRole;
+  cafeId?: string;
 }
 
 export function signAuthToken(payload: AuthTokenPayload): string {

@@ -3,9 +3,10 @@ import { UserRole } from '@prisma/client';
 import { AppError } from '../utils/AppError';
 
 /**
- * Reusable role guard for future endpoints, e.g. router.get('/admin/x',
- * requireAuth, requireRole('ADMIN'), handler). Must run after requireAuth,
- * since it reads req.user. Not wired to any route yet in this phase.
+ * Reusable role guard, e.g. router.get('/admin/x', requireAuth,
+ * requireRole('ADMIN'), handler). Must run after requireAuth, since it reads
+ * req.user. Used by the redemption ("BARISTA","ADMIN"), admin, and
+ * membership admin routes.
  */
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {

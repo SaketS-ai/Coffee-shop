@@ -9,7 +9,7 @@ import {
 } from '../services/drink.service';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { isNonEmptyString, isValidPrice } from '../utils/validators';
+import { isNonEmptyString, isValidCreditPrice, isValidPrice } from '../utils/validators';
 
 function isOptionalString(value: unknown): value is string | null | undefined {
   return value === undefined || value === null || typeof value === 'string';
@@ -21,6 +21,9 @@ function validateCreateDrinkInput(body: Record<string, unknown>) {
   }
   if (!isValidPrice(body.price)) {
     throw new AppError(400, 'price must be a number that is not negative.', 'INVALID_PRICE');
+  }
+  if (!isValidCreditPrice(body.credit_price)) {
+    throw new AppError(400, 'credit_price must be a whole number of 1 or more.', 'INVALID_CREDIT_PRICE');
   }
   if (!isOptionalString(body.description)) {
     throw new AppError(400, 'description must be a string.', 'INVALID_DESCRIPTION');
@@ -36,6 +39,9 @@ function validateUpdateDrinkInput(body: Record<string, unknown>) {
   }
   if (body.price !== undefined && !isValidPrice(body.price)) {
     throw new AppError(400, 'price must be a number that is not negative.', 'INVALID_PRICE');
+  }
+  if (body.credit_price !== undefined && !isValidCreditPrice(body.credit_price)) {
+    throw new AppError(400, 'credit_price must be a whole number of 1 or more.', 'INVALID_CREDIT_PRICE');
   }
   if (!isOptionalString(body.description)) {
     throw new AppError(400, 'description must be a string.', 'INVALID_DESCRIPTION');
@@ -88,6 +94,9 @@ export const createDrinkHandler = asyncHandler(async (req: Request, res: Respons
     description: body.description ?? null,
     price: body.price,
     image_url: body.image_url ?? null,
+    credit_price: body.credit_price,
+    category: body.category ?? null,
+    is_signature: body.is_signature === true,
   });
 
   res.status(201).json({ drink });
@@ -107,6 +116,9 @@ export const updateDrinkHandler = asyncHandler(async (req: Request, res: Respons
     description: body.description !== undefined ? body.description : undefined,
     price: body.price !== undefined ? body.price : undefined,
     image_url: body.image_url !== undefined ? body.image_url : undefined,
+    credit_price: body.credit_price !== undefined ? body.credit_price : undefined,
+    category: body.category !== undefined ? body.category : undefined,
+    is_signature: body.is_signature !== undefined ? body.is_signature : undefined,
     is_active: body.is_active !== undefined ? body.is_active : undefined,
   });
 

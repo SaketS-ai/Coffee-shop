@@ -4,9 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "dev": "vite --config apps/member/vite.config.ts apps/member",
+    "dev:member": "vite --config apps/member/vite.config.ts apps/member",
+    "dev:operations": "vite --config apps/operations/vite.config.ts apps/operations",
+    "build": "npm run build:member && npm run build:operations",
+    "build:member": "tsc -p apps/member/tsconfig.json && vite build --config apps/member/vite.config.ts apps/member",
+    "build:operations": "tsc -p apps/operations/tsconfig.json && vite build --config apps/operations/vite.config.ts apps/operations",
+    "typecheck": "tsc -p apps/member/tsconfig.json --noEmit && tsc -p apps/operations/tsconfig.json --noEmit",
+    "lint": "oxlint apps/member apps/operations backend/src",
+    "lint:member": "oxlint apps/member",
+    "lint:operations": "oxlint apps/operations",
     "preview": "vite preview"
   },
   "dependencies": {

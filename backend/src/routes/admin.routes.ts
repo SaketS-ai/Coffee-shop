@@ -8,6 +8,7 @@ import {
   getRedemptionLogHandler,
   recordPayoutHandler,
   voidRedemptionHandler,
+  setCafePinHandler,
 } from '../controllers/admin.controller';
 import { requireAuth } from '../middleware/auth';
 import { requireRole } from '../middleware/requireRole';
@@ -20,6 +21,7 @@ adminRouter.get('/admin/dashboard', requireAuth, requireRole('ADMIN'), getDashbo
 adminRouter.get('/admin/redemptions', requireAuth, requireRole('ADMIN'), getRedemptionLogHandler);
 adminRouter.get('/admin/redemptions/export', requireAuth, requireRole('ADMIN'), exportRedemptionLogHandler);
 adminRouter.post('/admin/redemptions/:id/void', requireAuth, requireRole('ADMIN'), voidRedemptionHandler);
+adminRouter.put('/admin/cafes/:cafeId/scanner-pin', requireAuth, requireRole('ADMIN'), setCafePinHandler);
 adminRouter.get('/admin/members', requireAuth, requireRole('ADMIN'), getMembersHandler);
 adminRouter.get('/admin/payouts/summary', requireAuth, requireRole('ADMIN'), getPayoutSummaryHandler);
 adminRouter.post('/admin/payouts', requireAuth, requireRole('ADMIN'), recordPayoutHandler);

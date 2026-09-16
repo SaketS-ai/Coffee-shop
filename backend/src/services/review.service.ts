@@ -10,37 +10,37 @@ function isUniqueViolation(err: unknown): boolean {
 
 export interface CreateReviewInput {
   userId: string;
-  redemptionId: string;
+  redemptionId?: string;
+  drinkId?: string;
   rating: number;
   note: string | null;
 }
 
 /**
- * Enforces the ownership/eligibility rule server-side: the redemption must
- * exist, belong to the authenticated user, and have actually completed
- * (status = REDEEMED) before it can be reviewed. drink_id is derived from
- * the redemption row, never trusted from the client.
+ * A visitor may review a drink directly; a redemption, when supplied, is
+ * still checked for ownership and completion. The unique user/drink index
+ * prevents duplicate ratings while allowing edits later.
  */
 export async function createReview(input: CreateReviewInput): Promise<Review> {
-  const { userId, redemptionId, rating, note } = input;
+  const { userId, redemptionId, drinkId, rating, note } = input;
 
-  const redemption = await prisma.redemption.findUnique({
+  const redemption = redemptionId ? await prisma.redemption.findUnique({
     where: { id: redemptionId },
     select: { user_id: true, drink_id: true, status: true },
-  });
-  if (!redemption) {
+  }) : null;
+  if (redemptionId && !redemption) {
     throw new AppError(404, 'Redemption not found.', 'REDEMPTION_NOT_FOUND');
   }
-  if (redemption.user_id !== userId) {
+  if (redemption && redemption.user_id !== userId) {
     throw new AppError(403, 'This redemption does not belong to you.', 'NOT_YOUR_REDEMPTION');
   }
-  if (redemption.status !== 'REDEEMED') {
+  if (redemption && redemption.status !== 'REDEEMED') {
     throw new AppError(403, 'Only completed redemptions can be reviewed.', 'REDEMPTION_NOT_COMPLETED');
   }
 
   try {
     return await prisma.review.create({
-      data: { user_id: userId, redemption_id: redemptionId, drink_id: redemption.drink_id, rating, note },
+      data: { user_id: userId, redemption_id: redemptionId ?? null, drink_id: redemption?.drink_id ?? drinkId!, rating, note },
     });
   } catch (err) {
     if (isUniqueViolation(err)) {
@@ -52,7 +52,7 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
 
 export interface ReviewWithDetails {
   id: string;
-  redemption_id: string;
+  redemption_id: string | null;
   drink_id: string;
   drink_name: string;
   drink_image_url: string | null;
@@ -71,7 +71,7 @@ export async function getReviewsForUser(userId: string): Promise<ReviewWithDetai
     where: { user_id: userId },
     orderBy: { created_at: 'desc' },
     include: {
-      drink: { select: { name: true, image_url: true } },
+      drink: { select: { name: true, image_url: true, cafe: { select: { name: true } } } },
       redemption: { select: { redeemed_at: true, cafe: { select: { name: true } } } },
     },
   });
@@ -82,11 +82,11 @@ export async function getReviewsForUser(userId: string): Promise<ReviewWithDetai
     drink_id: row.drink_id,
     drink_name: row.drink.name,
     drink_image_url: row.drink.image_url,
-    cafe_name: row.redemption.cafe.name,
+    cafe_name: row.redemption?.cafe.name ?? row.drink.cafe.name,
     rating: row.rating,
     note: row.note,
     created_at: row.created_at,
-    redeemed_at: row.redemption.redeemed_at,
+    redeemed_at: row.redemption?.redeemed_at ?? null,
   }));
 }
 
@@ -118,4 +118,50 @@ export async function updateReview(id: string, userId: string, input: UpdateRevi
 export async function deleteReview(id: string, userId: string): Promise<boolean> {
   const result = await prisma.review.deleteMany({ where: { id, user_id: userId } });
   return result.count > 0;
+}
+
+export interface RatingSummary {
+  average: number;
+  count: number;
+}
+
+const EMPTY_RATING: RatingSummary = { average: 0, count: 0 };
+
+// Batched per-drink rating aggregate - used when rendering a cafe's menu so
+// each drink card shows its own real average rather than a fabricated one.
+export async function getRatingSummaryByDrinkIds(drinkIds: string[]): Promise<Map<string, RatingSummary>> {
+  if (drinkIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<{ drink_id: string; average: number; count: bigint }[]>`
+    SELECT drink_id, AVG(rating)::float AS average, COUNT(*)::bigint AS count
+    FROM reviews
+    WHERE drink_id = ANY(${drinkIds}::uuid[])
+    GROUP BY drink_id
+  `;
+  return new Map(rows.map((row) => [row.drink_id, { average: row.average, count: Number(row.count) }]));
+}
+
+// Cafe-level rating: the average across every review of every drink at that
+// cafe (reviews have no cafe_id of their own, so this joins through drinks).
+export async function getRatingSummaryForCafe(cafeId: string): Promise<RatingSummary> {
+  const rows = await prisma.$queryRaw<{ average: number | null; count: bigint }[]>`
+    SELECT AVG(r.rating)::float AS average, COUNT(*)::bigint AS count
+    FROM reviews r
+    JOIN drinks d ON d.id = r.drink_id
+    WHERE d.cafe_id = ${cafeId}::uuid
+  `;
+  const row = rows[0];
+  return row ? { average: row.average ?? 0, count: Number(row.count) } : EMPTY_RATING;
+}
+
+// Same aggregate, batched for a page of cafes - used by the Discover listing.
+export async function getRatingSummaryByCafeIds(cafeIds: string[]): Promise<Map<string, RatingSummary>> {
+  if (cafeIds.length === 0) return new Map();
+  const rows = await prisma.$queryRaw<{ cafe_id: string; average: number; count: bigint }[]>`
+    SELECT d.cafe_id, AVG(r.rating)::float AS average, COUNT(*)::bigint AS count
+    FROM reviews r
+    JOIN drinks d ON d.id = r.drink_id
+    WHERE d.cafe_id = ANY(${cafeIds}::uuid[])
+    GROUP BY d.cafe_id
+  `;
+  return new Map(rows.map((row) => [row.cafe_id, { average: row.average, count: Number(row.count) }]));
 }

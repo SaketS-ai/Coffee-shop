@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Cafe, Drink } from '../../types';
-import { api } from '../../services/api';
+import { api, MembershipInfo } from '../../services/api';
 import { DiscoverScreen } from './DiscoverScreen';
 import { CafeDetailScreen } from './CafeDetailScreen';
 import { ProfileScreen } from './ProfileScreen';
@@ -17,22 +17,15 @@ import {
   Compass,
   Coffee,
   User,
-  Wifi,
-  Battery,
-  Smartphone,
   Sparkles,
-  LogIn
+  LogIn,
 } from 'lucide-react';
 
 export const MobileAppContainer: React.FC = () => {
-  const [deviceOS, setDeviceOS] = useState<'iphone' | 'android'>('iphone');
   const location = useLocation();
   const { cafeId } = useParams<{ cafeId?: string }>();
   const navigate = useNavigate();
-  // The URL is the source of truth for which screen is showing (so browser
-  // Back/Forward and reload/deep-link all work) - `selectedCafe` below is
-  // just a client-side cache of the cafe that :cafeId resolves to, kept in
-  // sync by the fetch effect further down.
+
   const activeTab: 'discover' | 'cafe_detail' | 'profile' =
     location.pathname === '/app/profile' ? 'profile' : cafeId ? 'cafe_detail' : 'discover';
 
@@ -46,25 +39,42 @@ export const MobileAppContainer: React.FC = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isRedeemOpen, setIsRedeemOpen] = useState(false);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [showWelcomeChoice, setShowWelcomeChoice] = useState(false);
 
   const member = store.getMember();
   const { user: liveUser } = useAuth();
+  const [liveMembership, setLiveMembership] = useState<MembershipInfo | null>(null);
 
-  // A freshly-logged-in member with no active membership yet gets asked once
-  // per session whether to subscribe now or just look around first -
-  // sessionStorage (not component state) tracks "already asked" so it
-  // survives remounts and doesn't nag again on every navigation.
+  // Fallback: Ensure a cafe is pre-loaded so counter redemption works immediately
   useEffect(() => {
-    if (!liveUser) return;
+    if (!selectedCafe && !cafeId) {
+      api.getCafes({ limit: 1 })
+        .then(({ cafes }) => {
+          if (cafes.length > 0) {
+            setSelectedCafe(cafes[0]);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [selectedCafe, cafeId]);
+
+  useEffect(() => {
+    if (!liveUser) {
+      setLiveMembership(null);
+      return;
+    }
     const seenKey = `social_cup_welcome_seen_${liveUser.id}`;
-    if (sessionStorage.getItem(seenKey)) return;
     let cancelled = false;
     api.getMembership()
       .then((membership) => {
-        if (!cancelled && membership.status === 'INACTIVE') setShowWelcomeChoice(true);
+        if (!cancelled) {
+          setLiveMembership(membership);
+          if (!sessionStorage.getItem(seenKey) && membership.status === 'INACTIVE') {
+            setShowWelcomeChoice(true);
+          }
+        }
       })
       .catch(() => {});
     return () => {
@@ -77,9 +87,6 @@ export const MobileAppContainer: React.FC = () => {
     setShowWelcomeChoice(false);
   };
 
-  // Resolves :cafeId to a real Cafe on a hard reload or deep link, where no
-  // click handler has already populated `selectedCafe`. A no-op when it was
-  // set optimistically by handleSelectCafe/handleSelectDrinkFromDiscover.
   useEffect(() => {
     if (!cafeId || selectedCafe?.id === cafeId) return;
     let cancelled = false;
@@ -121,94 +128,115 @@ export const MobileAppContainer: React.FC = () => {
     setIsRatingOpen(true);
   };
 
+  const effectiveCredits = liveMembership ? liveMembership.credits : member.credits;
+  const isMemberActive = liveMembership ? liveMembership.status === 'ACTIVE' : member.accountState === 'member';
+
   return (
-    <div className="flex flex-col items-center justify-center py-6 px-2 bg-[#FFF8F0] min-h-[calc(100vh-60px)] text-[#4B2E2B]">
-      {/* Device OS Selector Header */}
-      <div className="mb-4 flex items-center space-x-3 bg-white p-1.5 rounded-2xl border border-[#8C5A3C]/20 shadow-sm text-xs">
-        <span className="text-[#6B4E4B] font-bold px-2 flex items-center space-x-1">
-          <Smartphone className="w-4 h-4 text-[#8C5A3C]" />
-          <span>Device Preview:</span>
-        </span>
-        <button
-          onClick={() => setDeviceOS('iphone')}
-          className={`px-3 py-1 rounded-xl font-black transition-all ${
-            deviceOS === 'iphone'
-              ? 'bg-accent text-on-accent shadow'
-              : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
-          }`}
-        >
-           iPhone (iOS)
-        </button>
-        <button
-          onClick={() => setDeviceOS('android')}
-          className={`px-3 py-1 rounded-xl font-black transition-all ${
-            deviceOS === 'android'
-              ? 'bg-[#8C5A3C] text-[#FFF8F0] shadow'
-              : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
-          }`}
-        >
-          🤖 Android (Pixel)
-        </button>
-      </div>
-
-      {/* Mobile Device Frame Container */}
+    <div className="w-full min-h-screen bg-[#FAF5EF] text-[#241A16] flex flex-col relative select-none">
+      {/* Ambient background pattern visible across entire page */}
       <div
-        className={`w-full max-w-[380px] h-[780px] bg-[#FFF8F0] rounded-[44px] border-[10px] ${
-          deviceOS === 'iphone' ? 'border-[#4B2E2B] shadow-xl' : 'border-[#3D2523] shadow-xl'
-        } relative overflow-hidden flex flex-col`}
-      >
-        {/* Device Status Bar */}
-        <div className="bg-[#F4EFE6] text-[#4B2E2B] text-xs px-6 pt-3 pb-1.5 flex justify-between items-center z-30 select-none border-b border-[#8C5A3C]/10">
-          <span className="font-bold text-[12px]">9:41</span>
+        className="fixed inset-0 pointer-events-none z-0 bg-repeat opacity-[0.03]"
+        style={{
+          backgroundImage: "url('/doodle-pattern-alpha.png')",
+          backgroundSize: '360px auto',
+        }}
+        aria-hidden="true"
+      />
 
-          {/* iPhone Dynamic Island vs Android Camera Hole */}
-          {deviceOS === 'iphone' ? (
-            <div className="w-24 h-4.5 bg-[#4B2E2B] rounded-full mx-auto shadow-inner"></div>
-          ) : (
-            <div className="w-3.5 h-3.5 bg-[#4B2E2B] rounded-full mx-auto"></div>
-          )}
+      {/* Responsive Top Header (Spans full viewport width on desktop, tablet, and mobile) */}
+      <header className="sticky top-0 z-30 w-full bg-[#1E1411]/95 backdrop-blur-md border-b border-[#C58A55]/20 text-[#F3E7D5] shadow-md flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4 w-full">
+          {/* Brand Logo */}
+          <button
+            onClick={() => navigate('/app')}
+            className="flex items-center space-x-2.5 hover:opacity-85 transition-opacity cursor-pointer flex-shrink-0"
+          >
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#C58A55] to-[#6F4E3D] flex items-center justify-center shadow-xs">
+              <Coffee className="w-4.5 h-4.5 text-white stroke-[2.5]" />
+            </div>
+            <div className="flex items-center space-x-1.5">
+              <span className="font-editorial font-bold text-base sm:text-lg tracking-wider uppercase text-white">Social Cup</span>
+              <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-md bg-[#C58A55]/20 text-[#D6A36F] border border-[#C58A55]/30">
+                DAL
+              </span>
+            </div>
+          </button>
 
-          <div className="flex items-center space-x-1.5 text-[#6B4E4B]">
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4 text-[#8C5A3C]" />
-          </div>
-        </div>
+          {/* Desktop Navigation Links (hidden on mobile and tablet, visible on lg+) */}
+          <nav className="hidden lg:flex items-center space-x-2 lg:space-x-3" aria-label="Desktop Primary Navigation">
+            <button
+              onClick={() => navigate('/app')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'discover' || activeTab === 'cafe_detail'
+                  ? 'bg-[#3A2720] text-[#D6A36F] border border-[#C58A55]/40 shadow-xs'
+                  : 'text-[#DDD4C8] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Compass className="w-4 h-4 text-[#C58A55]" />
+              <span>Discover Roasters</span>
+            </button>
 
-        {/* Member Subscription Status Bar */}
-        <div className="bg-white border-b border-[#8C5A3C]/15 px-4 py-2 flex items-center justify-between text-xs text-[#4B2E2B] z-20 shadow-xs">
-          {liveUser ? (
+            <button
+              onClick={() => handleOpenRedeem()}
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 text-[#DDD4C8] hover:text-white hover:bg-white/5 cursor-pointer"
+            >
+              <Coffee className="w-4 h-4 text-[#C58A55]" />
+              <span>Redeem Pass</span>
+            </button>
+
             <button
               onClick={() => navigate('/app/profile')}
-              className="flex items-center space-x-2"
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'profile'
+                  ? 'bg-[#3A2720] text-[#D6A36F] border border-[#C58A55]/40 shadow-xs'
+                  : 'text-[#DDD4C8] hover:text-white hover:bg-white/5'
+              }`}
             >
-              <div className="w-2 h-2 rounded-full bg-[#8C5A3C] animate-ping" />
-              <span className="font-extrabold text-[#4B2E2B] text-xs">{liveUser.name}</span>
+              <User className="w-4 h-4 text-[#C58A55]" />
+              <span>Journal & Pass</span>
             </button>
-          ) : (
+          </nav>
+
+          {/* User Controls & Credits */}
+          <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
             <button
-              onClick={() => setIsLoginOpen(true)}
-              className="flex items-center space-x-1 text-[#8C5A3C] hover:text-[#4B2E2B] font-extrabold text-xs"
+              onClick={() => (isMemberActive ? navigate('/app/profile') : setIsCheckoutOpen(true))}
+              className="flex items-center space-x-1.5 bg-gradient-to-r from-[#C58A55] to-[#8C4A32] hover:from-[#B37944] hover:to-[#7B3F2A] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold shadow-xs caramel-glow-sm transition-all active:scale-95 cursor-pointer"
             >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Sign In</span>
+              <Sparkles className="w-3.5 h-3.5 fill-white text-white" />
+              <span>{isMemberActive ? `${effectiveCredits} Credits` : 'Unlock Pass'}</span>
             </button>
-          )}
 
-          <button
-            onClick={() => (member.accountState === 'visitor' ? setIsCheckoutOpen(true) : navigate('/app/profile'))}
-            className="flex items-center space-x-1 bg-accent text-on-accent px-2.5 py-1 rounded-full text-[10px] font-black shadow-xs"
-          >
-            <Sparkles className="w-3 h-3 fill-[#FFF8F0]" />
-            <span>{member.accountState === 'member' ? `${member.credits} Credits` : 'Visitor (Subscribe)'}</span>
-          </button>
+            {liveUser ? (
+              <button
+                onClick={() => navigate('/app/profile')}
+                className="flex items-center space-x-1.5 bg-[#251814] border border-[#C58A55]/30 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-xs font-bold text-[#F3E7D5] hover:border-[#C58A55] transition-all active:scale-95 cursor-pointer"
+                title="View Profile & Cupping Journal"
+              >
+                <div className="w-2 h-2 rounded-full bg-[#537A5A] animate-pulse" />
+                <span className="max-w-[85px] sm:max-w-[120px] truncate">{liveUser.name}</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLoginOpen(true)}
+                className="flex items-center space-x-1 text-[#D6A36F] hover:text-white font-bold text-xs px-2.5 py-1.5 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
+          </div>
         </div>
+      </header>
 
-        {/* Scrollable Mobile Viewport Body */}
-        <div className="flex-1 overflow-y-auto px-3.5 pt-3.5 pb-4 scrollbar-thin scrollbar-thumb-[#C08552]">
+      {/* Main Viewport (Responsive centered max-w-7xl layout) */}
+      <main className="w-full flex-1 relative z-10 flex flex-col">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 flex-1 min-w-0 pb-24 lg:pb-12">
           {activeTab === 'discover' && (
             <DiscoverScreen
               onSelectCafe={handleSelectCafe}
               onSelectDrink={handleSelectDrinkFromDiscover}
+              isMobile={false}
             />
           )}
 
@@ -219,19 +247,26 @@ export const MobileAppContainer: React.FC = () => {
                 onBack={() => navigate('/app')}
                 onRedeemDrink={handleOpenRedeem}
                 onRateDrink={handleOpenRating}
+                isMobile={false}
               />
             ) : (
-              <div className="text-center py-16 text-[#6B4E4B] text-xs">
+              <div className="text-center py-20 text-[#B9A28F] text-xs space-y-3">
                 {cafeLoadError ? (
                   <>
-                    <p className="font-bold text-red-600">{cafeLoadError}</p>
-                    <button onClick={() => navigate('/app')} className="mt-3 text-[#8C5A3C] hover:underline font-bold">
-                      Back to Discover
+                    <p className="font-bold text-[#B85D4F]">{cafeLoadError}</p>
+                    <button
+                      onClick={() => navigate('/app')}
+                      className="px-4 py-2 bg-[#251814] text-white rounded-xl font-bold cursor-pointer"
+                    >
+                      Return to Discover
                     </button>
                   </>
-                ) : isLoadingCafe ? (
-                  <p>Loading cafe...</p>
-                ) : null}
+                ) : (
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-48 bg-[#E8D8C4]/40 rounded-2xl" />
+                    <div className="h-6 w-1/2 bg-[#E8D8C4]/40 rounded-lg mx-auto" />
+                  </div>
+                )}
               </div>
             )
           )}
@@ -239,53 +274,61 @@ export const MobileAppContainer: React.FC = () => {
           {activeTab === 'profile' && (
             <ProfileScreen
               onOpenCheckout={() => setIsCheckoutOpen(true)}
-              onOpenAuth={() => setIsAuthOpen(true)}
+              onOpenAuth={() => setIsLoginOpen(true)}
             />
           )}
         </div>
+      </main>
 
-        {/* Native Mobile Bottom Navigation Bar */}
-        <nav className="bg-white border-t border-[#8C5A3C]/15 py-2 px-6 flex justify-around items-center z-30 shadow-md">
-          <button
-            onClick={() => navigate('/app')}
-            className={`flex flex-col items-center space-y-0.5 transition-all ${
-              activeTab === 'discover' ? 'text-[#8C5A3C] scale-105 font-black' : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
-            }`}
-          >
-            <Compass className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Discover</span>
-          </button>
+      {/* Mobile & Tablet Bottom Navigation Bar (lg:hidden) */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 bg-[#1E1411]/95 backdrop-blur-md border-t border-[#C58A55]/20 px-6 py-2 flex justify-around items-center shadow-2xl lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+        aria-label="Mobile Member Navigation"
+      >
+        {/* Discover Tab */}
+        <button
+          onClick={() => navigate('/app')}
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'discover'
+              ? 'text-[#D6A36F] font-bold'
+              : 'text-[#B98252] hover:text-[#F3E7D5]'
+          }`}
+        >
+          <Compass className="w-5 h-5 mb-0.5 stroke-[2.2]" />
+          <span className="text-[10px] font-bold tracking-tight">Discover</span>
+          {activeTab === 'discover' && (
+            <div className="w-4 h-1 bg-[#C58A55] rounded-full mt-0.5" />
+          )}
+        </button>
 
-          <button
-            onClick={() => selectedCafe && navigate(`/app/cafes/${selectedCafe.id}`)}
-            disabled={!selectedCafe}
-            aria-label={selectedCafe ? `View ${selectedCafe.name}` : 'No cafe selected yet'}
-            className={`flex flex-col items-center space-y-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-              activeTab === 'cafe_detail' ? 'text-[#8C5A3C] scale-105 font-black' : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
-            }`}
-          >
-            <Coffee className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Cafe</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/app/profile')}
-            className={`flex flex-col items-center space-y-0.5 transition-all ${
-              activeTab === 'profile' ? 'text-[#8C5A3C] scale-105 font-black' : 'text-[#6B4E4B] hover:text-[#4B2E2B]'
-            }`}
-          >
-            <User className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Diary & Pass</span>
-          </button>
-        </nav>
-
-        {/* Android Bottom Navigation Home Bar */}
-        {deviceOS === 'android' && (
-          <div className="bg-white py-1 flex justify-center items-center">
-            <div className="w-24 h-1 bg-[#8C5A3C]/40 rounded-full"></div>
+        {/* Digital Pass / Redeem Center Tab */}
+        <button
+          onClick={() => handleOpenRedeem()}
+          className="flex flex-col items-center -mt-5 group cursor-pointer"
+          title="Redeem Drink Credit"
+        >
+          <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#6F4E3D] via-[#8C4A32] to-[#C58A55] text-white flex items-center justify-center shadow-xl caramel-glow group-hover:scale-105 group-active:scale-95 transition-all border-2 border-[#1E1411] ring-2 ring-[#C58A55]/40">
+            <Coffee className="w-6 h-6 stroke-[2.5]" />
           </div>
-        )}
-      </div>
+          <span className="text-[10px] font-bold text-[#D6A36F] mt-0.5">Pass</span>
+        </button>
+
+        {/* Profile & Cupping Journal Tab */}
+        <button
+          onClick={() => navigate('/app/profile')}
+          className={`flex flex-col items-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'profile'
+              ? 'text-[#D6A36F] font-bold'
+              : 'text-[#B98252] hover:text-[#F3E7D5]'
+          }`}
+        >
+          <User className="w-5 h-5 mb-0.5 stroke-[2.2]" />
+          <span className="text-[10px] font-bold tracking-tight">Journal & Pass</span>
+          {activeTab === 'profile' && (
+            <div className="w-4 h-1 bg-[#C58A55] rounded-full mt-0.5" />
+          )}
+        </button>
+      </nav>
 
       {/* Modals */}
       <StripeCheckoutModal
@@ -313,7 +356,7 @@ export const MobileAppContainer: React.FC = () => {
         drink={selectedDrinkForRating}
       />
 
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal isOpen={isEditProfileOpen} onClose={() => setIsEditProfileOpen(false)} />
       <LoginScreen isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
       {liveUser && (

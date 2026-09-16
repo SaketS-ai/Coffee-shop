@@ -14,13 +14,12 @@ function isValidNote(value: unknown): value is string | null | undefined {
   return value === undefined || value === null || (typeof value === 'string' && value.length <= MAX_NOTE_LENGTH);
 }
 
-// POST /api/reviews - the authenticated user reviews one of their own
-// completed redemptions. Identity comes from the JWT, never a client-
-// supplied user_id.
+// POST /api/reviews - registered users may review a drink directly, or tie
+// the review to their completed redemption. Identity comes from the JWT.
 export const createReviewHandler = asyncHandler(async (req: Request, res: Response) => {
   const body = req.body ?? {};
-  if (!isNonEmptyString(body.redemptionId)) {
-    throw new AppError(400, 'redemptionId is required.', 'INVALID_INPUT');
+  if (!isNonEmptyString(body.redemptionId) && !isNonEmptyString(body.drinkId)) {
+    throw new AppError(400, 'redemptionId or drinkId is required.', 'INVALID_INPUT');
   }
   if (!isValidRating(body.rating)) {
     throw new AppError(400, 'rating must be an integer from 1 to 5.', 'INVALID_RATING');
@@ -31,7 +30,8 @@ export const createReviewHandler = asyncHandler(async (req: Request, res: Respon
 
   const review = await createReview({
     userId: req.user!.sub,
-    redemptionId: body.redemptionId,
+    redemptionId: isNonEmptyString(body.redemptionId) ? body.redemptionId : undefined,
+    drinkId: isNonEmptyString(body.drinkId) ? body.drinkId : undefined,
     rating: body.rating,
     note: body.note ?? null,
   });

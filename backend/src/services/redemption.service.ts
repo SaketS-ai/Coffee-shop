@@ -161,6 +161,19 @@ export async function getLatestRedemption(userId: string): Promise<Redemption | 
   return prisma.redemption.findFirst({ where: { user_id: userId }, orderBy: { created_at: 'desc' } });
 }
 
+// Module 1.2's "second scheduled job": marks PENDING codes whose 5-minute
+// window has passed as EXPIRED even if nobody ever came back to scan them
+// or generate a new one. createRedemption/redeemCode already expire a stale
+// code lazily the moment it's next touched - this is the proactive sweep
+// for ones that are simply never touched again.
+export async function expireStaleRedemptions(): Promise<number> {
+  const result = await prisma.redemption.updateMany({
+    where: { status: 'PENDING', expires_at: { lte: new Date() } },
+    data: { status: 'EXPIRED' },
+  });
+  return result.count;
+}
+
 export async function cancelPendingRedemption(userId: string): Promise<Redemption | null> {
   const result = await prisma.redemption.updateMany({
     where: { user_id: userId, status: 'PENDING' },
@@ -174,7 +187,7 @@ export interface RedeemInput {
   cafeId: string;
   token?: string;
   backupCode?: string;
-  redeemedByUserId: string;
+  redeemedByUserId?: string;
 }
 
 export interface RedeemResult {

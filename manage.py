@@ -127,36 +127,44 @@ def run_seed() -> int:
     return run_npm_script(BACKEND_DIR, "seed")
 
 
-def run_server() -> int:
+def run_server(app_choice: str = "all") -> int:
     if not require_postgres():
         return 1
 
     npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
     popen_kwargs = dict(stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    processes = []
 
     print("Starting backend (npm run dev)...", flush=True)
     backend_process = subprocess.Popen([npm_cmd, "run", "dev"], cwd=str(BACKEND_DIR), **popen_kwargs)
+    processes.append((backend_process, "backend"))
 
-    print("Starting frontend (npm run dev)...", flush=True)
-    frontend_process = subprocess.Popen([npm_cmd, "run", "dev"], cwd=str(ROOT_DIR), **popen_kwargs)
+    if app_choice in ("all", "member"):
+        print("Starting Member App (http://localhost:3000)...", flush=True)
+        member_process = subprocess.Popen([npm_cmd, "run", "dev:member"], cwd=str(ROOT_DIR), **popen_kwargs)
+        processes.append((member_process, "member"))
 
-    threading.Thread(target=stream_output, args=(backend_process, "backend"), daemon=True).start()
-    threading.Thread(target=stream_output, args=(frontend_process, "frontend"), daemon=True).start()
+    if app_choice in ("all", "operations"):
+        print("Starting Operations App (http://localhost:3001)...", flush=True)
+        ops_process = subprocess.Popen([npm_cmd, "run", "dev:operations"], cwd=str(ROOT_DIR), **popen_kwargs)
+        processes.append((ops_process, "operations"))
 
-    print("\nBoth servers starting. Press Ctrl+C to stop both.\n", flush=True)
+    for p, prefix in processes:
+        threading.Thread(target=stream_output, args=(p, prefix), daemon=True).start()
+
+    print("\nServers starting. Press Ctrl+C to stop.\n", flush=True)
 
     try:
-        while backend_process.poll() is None and frontend_process.poll() is None:
+        while all(p.poll() is None for p, _ in processes):
             time.sleep(0.5)
-        if backend_process.poll() is not None:
-            print(f"\n[backend] exited unexpectedly with code {backend_process.poll()}", flush=True)
-        if frontend_process.poll() is not None:
-            print(f"\n[frontend] exited unexpectedly with code {frontend_process.poll()}", flush=True)
+        for p, prefix in processes:
+            if p.poll() is not None:
+                print(f"\n[{prefix}] exited unexpectedly with code {p.poll()}", flush=True)
     except KeyboardInterrupt:
-        print("\nStopping backend and frontend...", flush=True)
+        print("\nStopping all servers...", flush=True)
     finally:
-        kill_process_tree(backend_process)
-        kill_process_tree(frontend_process)
+        for p, _ in processes:
+            kill_process_tree(p)
 
     return 0
 
@@ -164,14 +172,23 @@ def run_server() -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Social Cup local dev orchestrator")
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("runserver", help="Start backend + frontend dev servers (checks Postgres first)")
+    runserver_parser = subparsers.add_parser(
+        "runserver",
+        help="Start backend + frontend dev servers (checks Postgres first)",
+    )
+    runserver_parser.add_argument(
+        "--app",
+        choices=["all", "member", "operations"],
+        default="all",
+        help="Which frontend application to run alongside the backend (default: all)",
+    )
     subparsers.add_parser("migrate", help="Run pending database migrations (wraps `npm run migrate` in backend/)")
     subparsers.add_parser("seed", help="Run the dev database seed (wraps `npm run seed` in backend/)")
 
     args = parser.parse_args()
 
     if args.command == "runserver":
-        return run_server()
+        return run_server(args.app)
     if args.command == "migrate":
         return run_migrate()
     if args.command == "seed":

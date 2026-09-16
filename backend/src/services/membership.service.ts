@@ -1,5 +1,6 @@
 import { prisma } from '../config/prisma';
 import { Prisma, Membership } from '@prisma/client';
+import { logger } from '../utils/logger';
 
 export const MONTHLY_PLAN_PRICE_USD = 24.99;
 export const MONTHLY_CREDIT_ALLOWANCE = 30;
@@ -137,8 +138,22 @@ export interface CycleProcessResult {
  * it out (an auditable record that those credits expired, not a silent
  * overwrite), then a RESET entry grants the new cycle's +30. The resulting
  * balance is always exactly MONTHLY_CREDIT_ALLOWANCE.
+ *
+ * The RESET entry's billing_cycle_start is the second, DB-level guarantee
+ * against ever double-crediting one cycle (see migration
+ * 20260909000000_add_credit_ledger_billing_cycle_start): a unique index on
+ * (reference_id, billing_cycle_start) WHERE type = 'RESET' means a second
+ * attempt to grant the same membership's same cycle throws a Postgres
+ * unique-violation instead of silently succeeding, even if some future code
+ * path ever bypassed this function's row lock. processMembershipCycles
+ * below catches that violation and treats it as "already done."
+ *
+ * `asOf` defaults to the real current time for every production caller
+ * (scheduler.ts, the controllers, ensureCycleUpToDate) - it only exists so
+ * tests can simulate "a billing cycle that has already ended" without
+ * waiting for a real month or touching the system clock.
  */
-async function processOneMembershipCycle(membershipId: string): Promise<CycleProcessResult> {
+async function processOneMembershipCycle(membershipId: string, asOf: Date = new Date()): Promise<CycleProcessResult> {
   return prisma.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<Membership[]>`SELECT * FROM memberships WHERE id = ${membershipId}::uuid FOR UPDATE`;
     const membership = rows[0];
@@ -147,7 +162,7 @@ async function processOneMembershipCycle(membershipId: string): Promise<CyclePro
       !membership ||
       membership.status !== 'ACTIVE' ||
       !membership.end_date ||
-      new Date(membership.end_date) > new Date();
+      new Date(membership.end_date) > asOf;
 
     if (notEligible) {
       return {
@@ -171,13 +186,20 @@ async function processOneMembershipCycle(membershipId: string): Promise<CyclePro
     }
 
     const newBalance = MONTHLY_CREDIT_ALLOWANCE;
-    await tx.creditLedger.create({
-      data: { user_id: membership.user_id, type: 'RESET', amount: MONTHLY_CREDIT_ALLOWANCE, balance_after: newBalance, reference_id: membership.id },
-    });
-
     // New cycle begins exactly when the old one ended - no gap, no overlap.
     const newCycleStart = new Date(membership.end_date as Date);
     const newCycleEnd = new Date(newCycleStart.getTime() + MEMBERSHIP_PERIOD_DAYS * 24 * 60 * 60 * 1000);
+
+    await tx.creditLedger.create({
+      data: {
+        user_id: membership.user_id,
+        type: 'RESET',
+        amount: MONTHLY_CREDIT_ALLOWANCE,
+        balance_after: newBalance,
+        reference_id: membership.id,
+        billing_cycle_start: newCycleStart,
+      },
+    });
 
     await tx.membership.update({
       where: { id: membership.id },
@@ -190,10 +212,10 @@ async function processOneMembershipCycle(membershipId: string): Promise<CyclePro
 
 // Repeatedly advances one membership until it's no longer eligible (i.e.
 // fully caught up), bounded so a long-idle dev database can't loop forever.
-async function catchUpMembershipCycles(membershipId: string): Promise<CycleProcessResult[]> {
+async function catchUpMembershipCycles(membershipId: string, asOf: Date = new Date()): Promise<CycleProcessResult[]> {
   const results: CycleProcessResult[] = [];
   for (let i = 0; i < MAX_CYCLE_CATCHUP_ITERATIONS; i++) {
-    const result = await processOneMembershipCycle(membershipId);
+    const result = await processOneMembershipCycle(membershipId, asOf);
     if (!result.processed) break;
     results.push(result);
   }
@@ -209,21 +231,37 @@ export interface ProcessCyclesSummary {
 
 /**
  * The one reset implementation, reused by both the admin dev-trigger
- * (membership.controller.ts) and, eventually, a real scheduled job - whoever
- * calls this does not need to know or duplicate how a cycle is processed.
- * Finds every ACTIVE membership whose current cycle has ended and catches
- * each one up completely (handles a database left unprocessed for months in
- * one call, each missed cycle still getting its own VOID+RESET ledger pair).
+ * (membership.controller.ts) and the scheduled job (jobs/scheduler.ts) -
+ * whoever calls this does not need to know or duplicate how a cycle is
+ * processed. Finds every ACTIVE membership whose current cycle has ended
+ * and catches each one up completely (handles a database left unprocessed
+ * for months in one call, each missed cycle still getting its own
+ * VOID+RESET ledger pair).
+ *
+ * Each membership's catch-up is isolated in its own try/catch: a unique-
+ * constraint violation on the new billing_cycle_start index (see
+ * processOneMembershipCycle) means a duplicate slipped through some other
+ * path and this one's already done - logged and skipped, not re-thrown, so
+ * one membership's edge case can never abort every other member's reset in
+ * the same batch run.
  */
-export async function processMembershipCycles(): Promise<ProcessCyclesSummary> {
+export async function processMembershipCycles(asOf: Date = new Date()): Promise<ProcessCyclesSummary> {
   const candidates = await prisma.membership.findMany({
-    where: { status: 'ACTIVE', end_date: { not: null, lte: new Date() } },
+    where: { status: 'ACTIVE', end_date: { not: null, lte: asOf } },
     select: { id: true },
   });
 
   const allResults: CycleProcessResult[] = [];
   for (const row of candidates) {
-    allResults.push(...(await catchUpMembershipCycles(row.id)));
+    try {
+      allResults.push(...(await catchUpMembershipCycles(row.id, asOf)));
+    } catch (err) {
+      if (isUniqueViolation(err)) {
+        logger.warn(`Membership ${row.id}: duplicate RESET prevented by billing_cycle_start constraint, skipped.`);
+        continue;
+      }
+      throw err;
+    }
   }
 
   return {
@@ -241,14 +279,14 @@ export async function processMembershipCycles(): Promise<ProcessCyclesSummary> {
  * real cron infrastructure this phase. A no-op for the common case (nothing
  * eligible), so it changes no behavior for a membership that isn't lapsed.
  */
-export async function ensureCycleUpToDate(userId: string): Promise<void> {
+export async function ensureCycleUpToDate(userId: string, asOf: Date = new Date()): Promise<void> {
   const membership = await prisma.membership.findFirst({
     where: { user_id: userId, status: 'ACTIVE' },
     orderBy: { created_at: 'desc' },
     select: { id: true, end_date: true },
   });
-  if (!membership || !membership.end_date || new Date(membership.end_date) > new Date()) {
+  if (!membership || !membership.end_date || new Date(membership.end_date) > asOf) {
     return;
   }
-  await catchUpMembershipCycles(membership.id);
+  await catchUpMembershipCycles(membership.id, asOf);
 }

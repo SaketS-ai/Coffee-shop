@@ -1,19 +1,9 @@
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
 import { NextFunction, Request, Response } from 'express';
 import multer from 'multer';
+import { UPLOADS_DIR } from '../services/storage.service';
 import { AppError } from '../utils/AppError';
 
-// Local-first (no S3/cloud this phase, per CLAUDE.md): admin-uploaded cafe/
-// drink photos are saved to disk here and served back via the static mount
-// in app.ts. Moving to object storage later only changes this file and the
-// static mount, not the /api/uploads/image contract callers use.
-export const UPLOADS_DIR = path.join(__dirname, '../../uploads');
-
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+export { UPLOADS_DIR };
 
 const ALLOWED_MIME_TYPES: Record<string, string> = {
   'image/png': '.png',
@@ -24,13 +14,9 @@ const ALLOWED_MIME_TYPES: Record<string, string> = {
 
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
-  filename: (_req, file, cb) => {
-    const ext = ALLOWED_MIME_TYPES[file.mimetype] ?? path.extname(file.originalname);
-    cb(null, `${crypto.randomUUID()}${ext}`);
-  },
-});
+// Memory storage holds the buffer in memory so it can be streamed directly to AWS S3
+// without touching the container disk, or saved locally during dev mode.
+const storage = multer.memoryStorage();
 
 const uploadImage = multer({
   storage,

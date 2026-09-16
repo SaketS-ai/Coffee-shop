@@ -1,0 +1,15 @@
+-- Placeholder: `_prisma_migrations` on the local dev database already has a
+-- row named "20260903181652_init" (applied 2026-09-03), but no matching
+-- folder ever made it into this repo - only the later "20260907000000_init"
+-- baseline was committed. This empty file just gives that history row a
+-- local home so `prisma migrate status`/`migrate dev` stop reporting it as
+-- missing. It is NOT a record of what that migration actually did.
+--
+-- What it actually created (confirmed by inspecting the live database) is a
+-- separate, unused set of PascalCase tables/enums that don't correspond to
+-- any model in the current schema.prisma - Cafe, Drink, DrinkRating,
+-- RedemptionCode, RedemptionRecord, CafePayoutRecord, PlatformSettings,
+-- User, schema_migrations, AccountState, AccountStatus, CodeStatus,
+-- DrinkCategory. They're dead weight from an earlier, abandoned schema
+-- attempt, not something any current code reads or writes. Left in place
+-- (not dropped) since removing them wasn't part of this reconciliation.

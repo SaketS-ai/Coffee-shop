@@ -95,11 +95,21 @@ export const redeemHandler = asyncHandler(async (req: Request, res: Response) =>
     throw new AppError(400, 'A token or backup_code is required.', 'MISSING_CODE');
   }
 
+  let targetCafeId = body.cafe_id;
+  if (req.scanner) {
+    targetCafeId = req.scanner.cafeId;
+  } else if (req.user?.role === 'BARISTA' && req.user.cafeId) {
+    if (body.cafe_id && body.cafe_id !== req.user.cafeId) {
+      throw new AppError(403, 'This cafe session cannot redeem for a different cafe.', 'WRONG_CAFE');
+    }
+    targetCafeId = req.user.cafeId;
+  }
+
   const result = await redeemCode({
-    cafeId: body.cafe_id,
+    cafeId: targetCafeId,
     token: hasToken ? body.token : undefined,
     backupCode: hasBackupCode ? body.backup_code : undefined,
-    redeemedByUserId: req.user!.sub,
+    redeemedByUserId: req.user?.sub,
   });
 
   res.status(200).json({

@@ -4,6 +4,7 @@ import {
   deactivateCafe,
   getAllCafes,
   getCafeById,
+  getCafeByIdWithRating,
   updateCafe,
 } from '../services/cafe.service';
 import { AppError } from '../utils/AppError';
@@ -88,11 +89,12 @@ function parsePositiveInt(value: unknown): number | undefined {
 }
 
 export const listCafes = asyncHandler(async (req: Request, res: Response) => {
-  const { search, city, page, limit } = req.query;
+  const { search, city, neighborhood, page, limit } = req.query;
 
   const result = await getAllCafes({
     search: typeof search === 'string' && search.trim() ? search.trim() : undefined,
     city: typeof city === 'string' && city.trim() ? city.trim() : undefined,
+    neighborhood: typeof neighborhood === 'string' && neighborhood.trim() ? neighborhood.trim() : undefined,
     page: parsePositiveInt(page),
     limit: parsePositiveInt(limit),
   });
@@ -101,7 +103,7 @@ export const listCafes = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const getCafe = asyncHandler(async (req: Request, res: Response) => {
-  const cafe = await getCafeById(req.params.id);
+  const cafe = await getCafeByIdWithRating(req.params.id);
   if (!cafe || !cafe.is_active) {
     throw new AppError(404, 'Cafe not found.', 'CAFE_NOT_FOUND');
   }
@@ -121,6 +123,11 @@ export const createCafeHandler = asyncHandler(async (req: Request, res: Response
     longitude: body.longitude ?? null,
     image_url: body.image_url ?? null,
     description: body.description ?? null,
+    neighborhood: body.neighborhood ?? null,
+    opening_hours: body.opening_hours ?? null,
+    vibe_tags: Array.isArray(body.vibe_tags) ? body.vibe_tags : [],
+    perk_line: body.perk_line ?? null,
+    is_featured: body.is_featured === true,
     payout_rate: body.payout_rate ?? 0,
   });
 
@@ -145,6 +152,11 @@ export const updateCafeHandler = asyncHandler(async (req: Request, res: Response
     longitude: body.longitude !== undefined ? body.longitude : undefined,
     image_url: body.image_url !== undefined ? body.image_url : undefined,
     description: body.description !== undefined ? body.description : undefined,
+    neighborhood: body.neighborhood !== undefined ? body.neighborhood : undefined,
+    opening_hours: body.opening_hours !== undefined ? body.opening_hours : undefined,
+    vibe_tags: body.vibe_tags !== undefined ? body.vibe_tags : undefined,
+    perk_line: body.perk_line !== undefined ? body.perk_line : undefined,
+    is_featured: body.is_featured !== undefined ? body.is_featured : undefined,
     payout_rate: body.payout_rate !== undefined ? body.payout_rate : undefined,
     is_active: body.is_active !== undefined ? body.is_active : undefined,
   });

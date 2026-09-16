@@ -7,6 +7,11 @@ declare global {
       user?: {
         sub: string;
         role: UserRole;
+        cafeId?: string;
+      };
+      scanner?: {
+        cafeId: string;
+        deviceId: string;
       };
     }
   }

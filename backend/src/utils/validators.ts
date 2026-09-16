@@ -41,3 +41,11 @@ export function isValidLongitude(value: unknown): boolean {
 export function isValidPrice(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
+
+// credit_price is stored as Prisma Int and must move real money/credits at
+// redemption time - a 0 or missing value would let a drink be redeemed for
+// free, so unlike isValidPrice this excludes 0. undefined is handled by the
+// caller (required on create, optional on update).
+export function isValidCreditPrice(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 1;
+}
